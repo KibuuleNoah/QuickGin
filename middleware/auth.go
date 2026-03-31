@@ -14,13 +14,13 @@ func TokenAuth() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		tokenAuth, err := authModel.ExtractTokenMetadata(c.Request)
 		if err != nil {
-			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"message": "Please login first"})
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"message": "Authentication Required"})
 			return
 		}
 
 		userID, err := authModel.FetchAuth(tokenAuth)
 		if err != nil {
-			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"message": "Please login first"})
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"message": "Authentication Required"})
 			return
 		}
 

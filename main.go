@@ -10,7 +10,6 @@ import (
 	"github.com/Massad/gin-boilerplate/db"
 	_ "github.com/Massad/gin-boilerplate/docs"
 	"github.com/Massad/gin-boilerplate/forms"
-	"github.com/Massad/gin-boilerplate/invoice"
 	"github.com/Massad/gin-boilerplate/middleware"
 	"github.com/gin-contrib/gzip"
 	"github.com/gin-gonic/gin"
@@ -58,6 +57,8 @@ func main() {
 
 	r.Use(middleware.CORS())
 	r.Use(middleware.RequestID())
+
+	r.Use(gin.Logger()) // Log first
 	r.Use(gzip.Gzip(gzip.DefaultCompression))
 
 	db.Init()
@@ -67,15 +68,18 @@ func main() {
 	{
 		/*** START USER ***/
 		user := new(controllers.UserController)
+		userRoutes := v1.Group("/user")
 
-		v1.POST("/user/login", user.Login)
-		v1.POST("/user/register", user.Register)
-		v1.GET("/user/logout", middleware.TokenAuth(), user.Logout)
+		userRoutes.POST("/", user.CreateUser)
 
 		/*** START AUTH ***/
-		auth := new(controllers.AuthController)
+		auth := controllers.NewAuthController()
+		authRoutes := v1.Group("/auth")
 
-		v1.POST("/token/refresh", auth.Refresh)
+		authRoutes.POST("/with-password", auth.AuthWithPassword)
+		authRoutes.POST("/with-otp", auth.AuthWithOTP)
+		authRoutes.POST("/token/refresh", auth.Refresh)
+		authRoutes.POST("/logout", middleware.TokenAuth(), auth.AuthLogout)
 
 		/*** START Article ***/
 		article := new(controllers.ArticleController)
@@ -86,11 +90,6 @@ func main() {
 		v1.PUT("/article/:id", middleware.TokenAuth(), article.Update)
 		v1.DELETE("/article/:id", middleware.TokenAuth(), article.Delete)
 
-		/*** START Invoice ***/
-		inv := new(invoice.InvoiceController)
-
-		v1.GET("/invoice", inv.Preview)
-		v1.GET("/invoice/download", inv.Download)
 	}
 
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerfiles.Handler))

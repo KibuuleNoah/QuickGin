@@ -11,7 +11,8 @@
 # SENSITVE DATA #
 .gitconfig
 .env
+main_bootstrapgo
 cert/
-
+tmp/
 # BUILD #
 ./gin-boilerplate

@@ -187,133 +187,7 @@
                 }
             }
         },
-        "/invoice": {
-            "get": {
-                "description": "Returns an HTML preview of a sample invoice",
-                "produces": [
-                    "text/html"
-                ],
-                "tags": [
-                    "Invoice"
-                ],
-                "summary": "Preview Invoice as HTML",
-                "responses": {
-                    "200": {
-                        "description": "HTML page",
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                }
-            }
-        },
-        "/invoice/download": {
-            "get": {
-                "description": "Generates and downloads a sample invoice as PDF",
-                "produces": [
-                    "application/pdf"
-                ],
-                "tags": [
-                    "Invoice"
-                ],
-                "summary": "Download Invoice as PDF",
-                "responses": {
-                    "200": {
-                        "description": "PDF file",
-                        "schema": {
-                            "type": "file"
-                        }
-                    },
-                    "500": {
-                        "description": "Error generating PDF",
-                        "schema": {
-                            "type": "object"
-                        }
-                    }
-                }
-            }
-        },
-        "/token/refresh": {
-            "post": {
-                "description": "Refresh Token example",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Auth"
-                ],
-                "summary": "Refresh Token example",
-                "parameters": [
-                    {
-                        "description": "Auth",
-                        "name": "auth",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/forms.Token"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/models.AuthResponse"
-                        }
-                    },
-                    "406": {
-                        "description": "Not Acceptable",
-                        "schema": {
-                            "$ref": "#/definitions/models.MessageResponse"
-                        }
-                    }
-                }
-            }
-        },
-        "/user/login": {
-            "post": {
-                "description": "Login User example",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "User"
-                ],
-                "summary": "Login User example",
-                "parameters": [
-                    {
-                        "description": "User",
-                        "name": "article",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/forms.LoginForm"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/models.UserLoginResponse"
-                        }
-                    },
-                    "406": {
-                        "description": "Not Acceptable",
-                        "schema": {
-                            "$ref": "#/definitions/models.MessageResponse"
-                        }
-                    }
-                }
-            }
-        },
-        "/user/logout": {
+        "/auth/logout": {
             "get": {
                 "description": "Logout User example",
                 "consumes": [
@@ -342,9 +216,9 @@
                 }
             }
         },
-        "/user/register": {
+        "/auth/token/refresh": {
             "post": {
-                "description": "Register User example",
+                "description": "Refresh Token example",
                 "consumes": [
                     "application/json"
                 ],
@@ -352,17 +226,17 @@
                     "application/json"
                 ],
                 "tags": [
-                    "User"
+                    "Auth"
                 ],
-                "summary": "Register User example",
+                "summary": "Refresh Token example",
                 "parameters": [
                     {
-                        "description": "User",
-                        "name": "article",
+                        "description": "Auth",
+                        "name": "auth",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/forms.RegisterForm"
+                            "$ref": "#/definitions/forms.Token"
                         }
                     }
                 ],
@@ -370,7 +244,7 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/models.UserLoginResponse"
+                            "$ref": "#/definitions/models.AuthResponse"
                         }
                     },
                     "406": {
@@ -410,46 +284,6 @@
                 "title": {
                     "type": "string",
                     "maxLength": 100,
-                    "minLength": 3
-                }
-            }
-        },
-        "forms.LoginForm": {
-            "type": "object",
-            "required": [
-                "email",
-                "password"
-            ],
-            "properties": {
-                "email": {
-                    "type": "string"
-                },
-                "password": {
-                    "type": "string",
-                    "maxLength": 50,
-                    "minLength": 3
-                }
-            }
-        },
-        "forms.RegisterForm": {
-            "type": "object",
-            "required": [
-                "email",
-                "name",
-                "password"
-            ],
-            "properties": {
-                "email": {
-                    "type": "string"
-                },
-                "name": {
-                    "type": "string",
-                    "maxLength": 20,
-                    "minLength": 3
-                },
-                "password": {
-                    "type": "string",
-                    "maxLength": 50,
                     "minLength": 3
                 }
             }
@@ -545,45 +379,6 @@
                 },
                 "meta": {
                     "$ref": "#/definitions/models.Meta"
-                }
-            }
-        },
-        "models.Token": {
-            "type": "object",
-            "properties": {
-                "access_token": {
-                    "type": "string"
-                },
-                "refresh_token": {
-                    "type": "string"
-                }
-            }
-        },
-        "models.User": {
-            "type": "object",
-            "properties": {
-                "email": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "integer"
-                },
-                "name": {
-                    "type": "string"
-                }
-            }
-        },
-        "models.UserLoginResponse": {
-            "type": "object",
-            "properties": {
-                "message": {
-                    "type": "string"
-                },
-                "token": {
-                    "$ref": "#/definitions/models.Token"
-                },
-                "user": {
-                    "$ref": "#/definitions/models.User"
                 }
             }
         },

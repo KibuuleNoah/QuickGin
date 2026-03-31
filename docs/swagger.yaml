@@ -21,35 +21,6 @@ definitions:
     - content
     - title
     type: object
-  forms.LoginForm:
-    properties:
-      email:
-        type: string
-      password:
-        maxLength: 50
-        minLength: 3
-        type: string
-    required:
-    - email
-    - password
-    type: object
-  forms.RegisterForm:
-    properties:
-      email:
-        type: string
-      name:
-        maxLength: 20
-        minLength: 3
-        type: string
-      password:
-        maxLength: 50
-        minLength: 3
-        type: string
-    required:
-    - email
-    - name
-    - password
-    type: object
   forms.Token:
     properties:
       refresh_token:
@@ -109,31 +80,6 @@ definitions:
         type: array
       meta:
         $ref: '#/definitions/models.Meta'
-    type: object
-  models.Token:
-    properties:
-      access_token:
-        type: string
-      refresh_token:
-        type: string
-    type: object
-  models.User:
-    properties:
-      email:
-        type: string
-      id:
-        type: integer
-      name:
-        type: string
-    type: object
-  models.UserLoginResponse:
-    properties:
-      message:
-        type: string
-      token:
-        $ref: '#/definitions/models.Token'
-      user:
-        $ref: '#/definitions/models.User'
     type: object
   models.UserResponse:
     properties:
@@ -273,37 +219,26 @@ paths:
       summary: Get All Articles example
       tags:
       - Article
-  /invoice:
+  /auth/logout:
     get:
-      description: Returns an HTML preview of a sample invoice
+      consumes:
+      - application/json
+      description: Logout User example
       produces:
-      - text/html
+      - application/json
       responses:
         "200":
-          description: HTML page
+          description: OK
           schema:
-            type: string
-      summary: Preview Invoice as HTML
+            $ref: '#/definitions/models.MessageResponse'
+        "406":
+          description: Not Acceptable
+          schema:
+            $ref: '#/definitions/models.MessageResponse'
+      summary: Logout User example
       tags:
-      - Invoice
-  /invoice/download:
-    get:
-      description: Generates and downloads a sample invoice as PDF
-      produces:
-      - application/pdf
-      responses:
-        "200":
-          description: PDF file
-          schema:
-            type: file
-        "500":
-          description: Error generating PDF
-          schema:
-            type: object
-      summary: Download Invoice as PDF
-      tags:
-      - Invoice
-  /token/refresh:
+      - User
+  /auth/token/refresh:
     post:
       consumes:
       - application/json
@@ -329,77 +264,6 @@ paths:
       summary: Refresh Token example
       tags:
       - Auth
-  /user/login:
-    post:
-      consumes:
-      - application/json
-      description: Login User example
-      parameters:
-      - description: User
-        in: body
-        name: article
-        required: true
-        schema:
-          $ref: '#/definitions/forms.LoginForm'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/models.UserLoginResponse'
-        "406":
-          description: Not Acceptable
-          schema:
-            $ref: '#/definitions/models.MessageResponse'
-      summary: Login User example
-      tags:
-      - User
-  /user/logout:
-    get:
-      consumes:
-      - application/json
-      description: Logout User example
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/models.MessageResponse'
-        "406":
-          description: Not Acceptable
-          schema:
-            $ref: '#/definitions/models.MessageResponse'
-      summary: Logout User example
-      tags:
-      - User
-  /user/register:
-    post:
-      consumes:
-      - application/json
-      description: Register User example
-      parameters:
-      - description: User
-        in: body
-        name: article
-        required: true
-        schema:
-          $ref: '#/definitions/forms.RegisterForm'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/models.UserLoginResponse'
-        "406":
-          description: Not Acceptable
-          schema:
-            $ref: '#/definitions/models.MessageResponse'
-      summary: Register User example
-      tags:
-      - User
 securityDefinitions:
   BearerAuth:
     in: header

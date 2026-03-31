@@ -9,7 +9,7 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-type UserLoginResponse struct {
+type UserAuthResponse struct {
 	User    User   `json:"user"`
 	Token   Token  `json:"token"`
 	Message string `json:"message"`
@@ -21,12 +21,14 @@ type MessageResponse struct {
 
 // User ...
 type User struct {
-	ID        int64  `db:"id" json:"id"`
-	Email     string `db:"email" json:"email"`
-	Password  string `db:"password" json:"-"`
-	Name      string `db:"name" json:"name"`
-	UpdatedAt int64  `db:"updated_at" json:"-"`
-	CreatedAt int64  `db:"created_at" json:"-"`
+	ID          int64  `db:"id" json:"id"`
+	Identifier  string `db:"identifier" json:"identifier"`
+	Password    string `db:"password" json:"-"`
+	Verified    bool   `db:"verified"      json:"verified"`
+	Name        string `db:"name" json:"name"`
+	UpdatedAt   int64  `db:"updated_at" json:"-"`
+	CreatedAt   int64  `db:"created_at" json:"-"`
+	LastLoginAt int64  `db:"last_login_at" json:"last_login_at,omitempty"`
 }
 
 // UserModel ...
@@ -34,70 +36,44 @@ type UserModel struct{}
 
 var authModel = new(AuthModel)
 
-// Login ...
-func (m UserModel) Login(form forms.LoginForm) (user User, token Token, err error) {
+func HashPassword(password string) ([]byte, error) {
 
-	err = db.GetDB().Get(&user, "SELECT id, email, password, name, updated_at, created_at FROM public.user WHERE email=LOWER($1) LIMIT 1", form.Email)
-
-	if err != nil {
-		return user, token, err
-	}
-
-	//Compare the password form and database if match
-	bytePassword := []byte(form.Password)
-	byteHashedPassword := []byte(user.Password)
-
-	err = bcrypt.CompareHashAndPassword(byteHashedPassword, bytePassword)
-
-	if err != nil {
-		return user, token, err
-	}
-
-	//Generate the JWT auth token
-	tokenDetails, err := authModel.CreateToken(user.ID)
-	if err != nil {
-		return user, token, err
-	}
-
-	if err = authModel.CreateAuth(user.ID, tokenDetails); err != nil {
-		return user, token, err
-	}
-
-	token.AccessToken = tokenDetails.AccessToken
-	token.RefreshToken = tokenDetails.RefreshToken
-
-	return user, token, nil
+	bytePassword := []byte(password)
+	return bcrypt.GenerateFromPassword(bytePassword, bcrypt.DefaultCost)
 }
 
-// Register ...
-func (m UserModel) Register(form forms.RegisterForm) (user User, err error) {
+// Create New User ...
+func (m UserModel) Create(form forms.CreateUserForm) (user User, err error) {
 	getDb := db.GetDB()
 
 	//Check if the user exists in database
 	var checkUser int64
-	err = getDb.Get(&checkUser, "SELECT count(id) FROM public.user WHERE email=LOWER($1) LIMIT 1", form.Email)
+	err = getDb.Get(&checkUser, "SELECT count(id) FROM public.user WHERE identifier=LOWER($1) LIMIT 1", form.Identifier)
 	if err != nil {
 		return user, errors.New("something went wrong, please try again later")
 	}
 
 	if checkUser > 0 {
-		return user, errors.New("email already exists")
+		return user, errors.New("email/phone no. already exists")
 	}
 
-	bytePassword := []byte(form.Password)
-	hashedPassword, err := bcrypt.GenerateFromPassword(bytePassword, bcrypt.DefaultCost)
-	if err != nil {
-		return user, errors.New("something went wrong, please try again later")
+	if len(form.Password) > 0 {
+		password, err := HashPassword(form.Password)
+		if err != nil {
+			return user, errors.New("something went wrong, please try again later")
+		}
+		user.Password = string(password)
 	}
 
 	//Create the user and return back the user ID
-	err = getDb.QueryRow("INSERT INTO public.user(email, password, name) VALUES($1, $2, $3) RETURNING id", form.Email, string(hashedPassword), form.Name).Scan(&user.ID)
+	err = getDb.QueryRow("INSERT INTO public.user(identifier, password, name) VALUES($1, $2, $3) RETURNING id", form.Identifier, user.Password, form.Name).Scan(&user.ID)
 	if err != nil {
 		return user, errors.New("something went wrong, please try again later")
 	}
 
+	user.Password = ""
 	user.Name = form.Name
-	user.Email = form.Email
+	user.Identifier = form.Identifier
 
 	return user, err
 }

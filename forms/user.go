@@ -1,23 +1,21 @@
 package forms
 
-// LoginForm ...
-type LoginForm struct {
-	Email    string `form:"email" json:"email" binding:"required,email"`
-	Password string `form:"password" json:"password" binding:"required,min=3,max=50"`
+type AuthWithPasswordForm struct {
+	Identifier string `form:"identifier" json:"identifier" binding:"required"`
+	Password   string `form:"password" json:"password" binding:"required,min=3,max=50"`
 }
 
-// RegisterForm ...
-type RegisterForm struct {
-	Name     string `form:"name" json:"name" binding:"required,min=3,max=20,fullName"`
-	Email    string `form:"email" json:"email" binding:"required,email"`
-	Password string `form:"password" json:"password" binding:"required,min=3,max=50"`
+// CreateUserForm ...
+type CreateUserForm struct {
+	Name       string `form:"name" json:"name" binding:"required,min=3,max=20,fullName"`
+	Identifier string `form:"identifier" json:"identifier" binding:"required"`
+	Password   string `form:"password" json:"password" binding:"required,min=3,max=50"`
 }
 
-// LoginMessages defines validation error messages for login form.
-var LoginMessages = ValidationMessages{
-	"Email": {
-		"required": "Please enter your email",
-		"email":    "Please enter a valid email",
+var AuthWithPasswordFormMessages = ValidationMessages{
+	"Identifier": {
+		"required":   "Please enter your Identifier email/phone no.",
+		"identifier": "Please enter a valid Identifier email/phone no.",
 	},
 	"Password": {
 		"required": "Please enter your password",
@@ -28,16 +26,16 @@ var LoginMessages = ValidationMessages{
 }
 
 // RegisterMessages defines validation error messages for register form.
-var RegisterMessages = ValidationMessages{
+var CreateUserFormMessages = ValidationMessages{
 	"Name": {
 		"required": "Please enter your name",
 		"min":      "Your name should be between 3 to 20 characters",
 		"max":      "Your name should be between 3 to 20 characters",
 		"fullName": "Name should not include any special characters or numbers",
 	},
-	"Email": {
-		"required": "Please enter your email",
-		"email":    "Please enter a valid email",
+	"Identifier": {
+		"required":   "Please enter your Identifier email/phone no.",
+		"identifier": "Please enter a valid Identifier email/phone no.",
 	},
 	"Password": {
 		"required": "Please enter your password",

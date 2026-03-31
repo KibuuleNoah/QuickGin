@@ -16,7 +16,6 @@ import (
 	"github.com/Massad/gin-boilerplate/controllers"
 	"github.com/Massad/gin-boilerplate/db"
 	"github.com/Massad/gin-boilerplate/forms"
-	"github.com/Massad/gin-boilerplate/invoice"
 	"github.com/Massad/gin-boilerplate/middleware"
 	"github.com/joho/godotenv"
 
@@ -562,29 +561,6 @@ func TestInvoicePreview(t *testing.T) {
 	assert.Contains(t, resp.Header().Get("Content-Type"), "text/html")
 	assert.Contains(t, resp.Body.String(), "INV-001")
 	assert.Contains(t, resp.Body.String(), "Acme Corp")
-}
-
-/**
-* TestInvoiceDownload
-* Test invoice PDF download
-*
-* Must return response code 200 with PDF content type
- */
-func TestInvoiceDownload(t *testing.T) {
-	testRouter := SetupRouter()
-
-	req, err := http.NewRequest("GET", "/v1/invoice/download", nil)
-	if err != nil {
-		fmt.Println(err)
-	}
-
-	resp := httptest.NewRecorder()
-	testRouter.ServeHTTP(resp, req)
-
-	assert.Equal(t, http.StatusOK, resp.Code)
-	assert.Equal(t, "application/pdf", resp.Header().Get("Content-Type"))
-	assert.Contains(t, resp.Header().Get("Content-Disposition"), "INV-001.pdf")
-	assert.True(t, resp.Body.Len() > 0, "PDF body should not be empty")
 }
 
 /**
