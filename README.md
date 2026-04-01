@@ -11,10 +11,8 @@ The fastest way to deploy a RESTful API with [Gin Framework](https://github.com/
 - [sqlx](https://github.com/jmoiron/sqlx): Lightweight SQL extensions for Go
 - [jwt-go](https://github.com/golang-jwt/jwt): JSON Web Tokens (JWT) middleware
 - [go-redis](https://github.com/go-redis/redis): Redis client
-- [maroto](https://github.com/johnfercher/maroto): Pure Go PDF generation
 - Built-in **CORS**, **RequestID**, and **Auth** middleware
 - Built-in **custom form validators** with reusable error translation
-- **Invoice example** — HTML preview and PDF download
 - **Swagger API documentation**
 - PostgreSQL with JSON/JSONB queries and trigger functions
 - SSL support
@@ -33,7 +31,7 @@ The fastest way to deploy a RESTful API with [Gin Framework](https://github.com/
 Clone the repository:
 
 ```bash
-git clone https://github.com/Massad/gin-boilerplate.git
+git clone https://github.com/KibuuleNoah/QuickGin.git 
 cd gin-boilerplate
 ```
 
@@ -136,16 +134,6 @@ make run
 
 Then open: `https://localhost:9000/swagger/index.html`
 
-## Invoice Demo
-
-Once the server is running, open the invoice preview in your browser:
-
-```
-http://localhost:9000/v1/invoice
-```
-
-The page shows an HTML invoice with a **Download PDF** button that generates a PDF using [maroto](https://github.com/johnfercher/maroto) (pure Go, no external dependencies).
-
 ## Trusted Proxies & CORS
 
 By default, `SetTrustedProxies(nil)` is configured — Gin will not trust any proxy headers. If you deploy behind a reverse proxy (nginx, CloudFlare, etc.), set your trusted proxy IPs:
@@ -172,7 +160,6 @@ controllers/    HTTP handlers
 models/         Database structs and queries (sqlx + raw SQL)
 forms/          Request validation structs and reusable error translation
 middleware/     CORS, RequestID, and JWT auth middleware
-invoice/        Invoice HTML/PDF generation example
 db/             PostgreSQL and Redis initialization
 docs/           Swagger documentation (auto-generated)
 public/         Static files and HTML templates
