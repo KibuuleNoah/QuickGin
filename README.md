@@ -32,7 +32,7 @@ Clone the repository:
 
 ```bash
 git clone https://github.com/KibuuleNoah/QuickGin.git 
-cd gin-boilerplate
+cd QuickGin
 ```
 
 Install dependencies:
