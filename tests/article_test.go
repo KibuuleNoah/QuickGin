@@ -13,10 +13,10 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/Massad/gin-boilerplate/controllers"
-	"github.com/Massad/gin-boilerplate/db"
-	"github.com/Massad/gin-boilerplate/forms"
-	"github.com/Massad/gin-boilerplate/middleware"
+	"github.com/KibuuleNoah/QuickGin/controllers"
+	"github.com/KibuuleNoah/QuickGin/db"
+	"github.com/KibuuleNoah/QuickGin/forms"
+	"github.com/KibuuleNoah/QuickGin/middleware"
 	"github.com/joho/godotenv"
 
 	"github.com/gin-gonic/gin"

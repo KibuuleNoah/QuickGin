@@ -2,8 +2,8 @@ package models
 
 import (
 	"errors"
-	"github.com/Massad/gin-boilerplate/db"
-	"github.com/Massad/gin-boilerplate/forms"
+	"github.com/KibuuleNoah/QuickGin/db"
+	"github.com/KibuuleNoah/QuickGin/forms"
 	"golang.org/x/crypto/bcrypt"
 )
 

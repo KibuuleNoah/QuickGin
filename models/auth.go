@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Massad/gin-boilerplate/db"
+	"github.com/KibuuleNoah/QuickGin/db"
 	redis "github.com/go-redis/redis/v7"
 	jwt "github.com/golang-jwt/jwt/v4"
 	uuid "github.com/google/uuid"

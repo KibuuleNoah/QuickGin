@@ -6,10 +6,10 @@ import (
 	"os"
 	"strings"
 
-	"github.com/Massad/gin-boilerplate/db"
-	"github.com/Massad/gin-boilerplate/forms"
-	"github.com/Massad/gin-boilerplate/models"
-	"github.com/Massad/gin-boilerplate/services"
+	"github.com/KibuuleNoah/QuickGin/db"
+	"github.com/KibuuleNoah/QuickGin/forms"
+	"github.com/KibuuleNoah/QuickGin/models"
+	"github.com/KibuuleNoah/QuickGin/services"
 	"github.com/gin-gonic/gin"
 	jwt "github.com/golang-jwt/jwt/v4"
 )

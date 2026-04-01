@@ -3,7 +3,7 @@ package middleware
 import (
 	"net/http"
 
-	"github.com/Massad/gin-boilerplate/models"
+	"github.com/KibuuleNoah/QuickGin/models"
 	"github.com/gin-gonic/gin"
 )
 

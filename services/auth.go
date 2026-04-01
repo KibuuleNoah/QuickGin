@@ -4,9 +4,9 @@ import (
 	"context"
 	"errors"
 
-	"github.com/Massad/gin-boilerplate/db"
-	"github.com/Massad/gin-boilerplate/forms"
-	"github.com/Massad/gin-boilerplate/models"
+	"github.com/KibuuleNoah/QuickGin/db"
+	"github.com/KibuuleNoah/QuickGin/forms"
+	"github.com/KibuuleNoah/QuickGin/models"
 	"github.com/go-redis/redis/v7"
 	"github.com/jmoiron/sqlx"
 	"golang.org/x/crypto/bcrypt"

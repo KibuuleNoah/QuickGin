@@ -12,8 +12,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Massad/gin-boilerplate/db"
-	"github.com/Massad/gin-boilerplate/models"
+	"github.com/KibuuleNoah/QuickGin/db"
+	"github.com/KibuuleNoah/QuickGin/models"
 	"github.com/go-redis/redis/v7"
 	"github.com/jmoiron/sqlx"
 )

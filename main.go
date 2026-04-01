@@ -6,11 +6,11 @@ import (
 	"os"
 	"runtime"
 
-	"github.com/Massad/gin-boilerplate/controllers"
-	"github.com/Massad/gin-boilerplate/db"
-	_ "github.com/Massad/gin-boilerplate/docs"
-	"github.com/Massad/gin-boilerplate/forms"
-	"github.com/Massad/gin-boilerplate/middleware"
+	"github.com/KibuuleNoah/QuickGin/controllers"
+	"github.com/KibuuleNoah/QuickGin/db"
+	_ "github.com/KibuuleNoah/QuickGin/docs"
+	"github.com/KibuuleNoah/QuickGin/forms"
+	"github.com/KibuuleNoah/QuickGin/middleware"
 	"github.com/gin-contrib/gzip"
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
@@ -29,7 +29,7 @@ import (
 // @contact.email  support@swagger.io
 
 // @license.name  MIT License
-// @license.url   https://github.com/Massad/gin-boilerplate/blob/master/LICENSE
+// @license.url   https://github.com/KibuuleNoah/QuickGin/blob/master/LICENSE
 
 // @host      localhost:9000
 // @BasePath  /v1

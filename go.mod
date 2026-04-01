@@ -1,4 +1,4 @@
-module github.com/Massad/gin-boilerplate
+module github.com/KibuuleNoah/QuickGin
 
 go 1.25.6
 

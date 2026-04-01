@@ -17,7 +17,7 @@ const docTemplate = `{
         },
         "license": {
             "name": "MIT License",
-            "url": "https://github.com/Massad/gin-boilerplate/blob/master/LICENSE"
+            "url": "https://github.com/KibuuleNoah/QuickGin/blob/master/LICENSE"
         },
         "version": "{{.Version}}"
     },
