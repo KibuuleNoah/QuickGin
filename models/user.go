@@ -2,10 +2,8 @@ package models
 
 import (
 	"errors"
-
 	"github.com/Massad/gin-boilerplate/db"
 	"github.com/Massad/gin-boilerplate/forms"
-
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -21,7 +19,7 @@ type MessageResponse struct {
 
 // User ...
 type User struct {
-	ID          int64  `db:"id" json:"id"`
+	ID          string `db:"id" json:"id"`
 	Identifier  string `db:"identifier" json:"identifier"`
 	Password    string `db:"password" json:"-"`
 	Verified    bool   `db:"verified"      json:"verified"`
@@ -33,8 +31,6 @@ type User struct {
 
 // UserModel ...
 type UserModel struct{}
-
-var authModel = new(AuthModel)
 
 func HashPassword(password string) ([]byte, error) {
 
@@ -78,8 +74,9 @@ func (m UserModel) Create(form forms.CreateUserForm) (user User, err error) {
 	return user, err
 }
 
-// One ...
-func (m UserModel) One(userID int64) (user User, err error) {
-	err = db.GetDB().Get(&user, "SELECT id, email, name FROM public.user WHERE id=$1 LIMIT 1", userID)
-	return user, err
-}
+// Fetch One User of the currect struct by id
+// same as  err := DB.Get(&user, "SELECT id, identifier, name, updated_at, created_at FROM public.user WHERE id=$1 LIMIT 1", form.UserID)
+// func (u *User) () (err error) {
+// 	err = db.GetDB().Get(u, "SELECT id, identifier, name, updated_at, created_at FROM public.user WHERE id=$1 LIMIT 1", u.ID)
+// d	return err
+// }

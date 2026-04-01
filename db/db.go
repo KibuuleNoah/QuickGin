@@ -5,9 +5,9 @@ import (
 	"log"
 	"os"
 
+	_redis "github.com/go-redis/redis/v7"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
-	_redis "github.com/go-redis/redis/v7"
 )
 
 var dbConn *sqlx.DB
@@ -58,6 +58,11 @@ func InitRedis(selectDB ...int) {
 		Password: redisPassword,
 		DB:       redisDB,
 	})
+
+	if err := RedisClient.Ping().Err(); err != nil {
+		log.Fatalf("Critical Error: Could not connect to Redis: %v", err)
+	}
+
 }
 
 // GetRedis returns the Redis client.

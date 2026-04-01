@@ -1,0 +1,46 @@
+package main
+
+import (
+	"fmt"
+	"net/mail"
+	"regexp"
+	"strings"
+)
+
+// DetectType checks if a string is a valid email or mobile number (E.164 format)
+func DetectIdentifierType(input string) string {
+	input = strings.TrimSpace(input)
+
+	// Check for Email using the standard library
+	if _, err := mail.ParseAddress(input); err == nil {
+		// Standard ParseAddress can accept "Name <email@domain.com>",
+		// so we check if the input contains '@' to be safe for simple strings.
+		if strings.Contains(input, "@") && !strings.Contains(input, " ") {
+			return "email"
+		}
+	}
+
+	// Check for Mobile Number (E.164 format: +1234567890)
+	// This regex matches an optional '+' followed by 10 to 15 digits.
+	mobileRegex := regexp.MustCompile(`^\+?[1-9]\d{9,14}$`)
+	if mobileRegex.MatchString(input) {
+		return "mobile"
+	}
+
+	return "invalid"
+}
+
+func main() {
+	testInputs := []string{
+		"user@example.com",
+		"+14155552671",
+		"0987654321", // Often considered invalid if not E.164, adjust regex as needed
+		"not-an-email",
+		"+256705707168",
+		"noahtristar3@gmail.com",
+	}
+
+	for _, input := range testInputs {
+		fmt.Printf("Input: %s -> Detected: %s\n", input, DetectType(input))
+	}
+}

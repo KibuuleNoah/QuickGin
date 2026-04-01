@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/Massad/gin-boilerplate/db"
+	redis "github.com/go-redis/redis/v7"
 	jwt "github.com/golang-jwt/jwt/v4"
 	uuid "github.com/google/uuid"
 )
@@ -42,10 +43,18 @@ type Token struct {
 }
 
 // AuthModel ...
-type AuthModel struct{}
+type AuthModel struct {
+	redisDB *redis.Client
+}
+
+func NewAuthModel() *AuthModel {
+	return &AuthModel{
+		redisDB: db.GetRedis(),
+	}
+}
 
 // CreateToken ...
-func (m AuthModel) CreateToken(userID int64) (*TokenDetails, error) {
+func (m AuthModel) CreateToken(userID string) (*TokenDetails, error) {
 
 	td := &TokenDetails{}
 	td.AtExpires = time.Now().Add(time.Minute * 15).Unix()
@@ -81,16 +90,16 @@ func (m AuthModel) CreateToken(userID int64) (*TokenDetails, error) {
 }
 
 // CreateAuth ...
-func (m AuthModel) CreateAuth(userid int64, td *TokenDetails) error {
+func (m AuthModel) CreateAuth(userid string, td *TokenDetails) error {
 	at := time.Unix(td.AtExpires, 0) //converting Unix to UTC(to Time object)
 	rt := time.Unix(td.RtExpires, 0)
 	now := time.Now()
 
-	errAccess := db.GetRedis().Set(td.AccessUUID, strconv.Itoa(int(userid)), at.Sub(now)).Err()
+	errAccess := m.redisDB.Set(td.AccessUUID, userid, at.Sub(now)).Err()
 	if errAccess != nil {
 		return errAccess
 	}
-	errRefresh := db.GetRedis().Set(td.RefreshUUID, strconv.Itoa(int(userid)), rt.Sub(now)).Err()
+	errRefresh := m.redisDB.Set(td.RefreshUUID, userid, rt.Sub(now)).Err()
 	if errRefresh != nil {
 		return errRefresh
 	}
@@ -153,7 +162,7 @@ func (m AuthModel) ExtractTokenMetadata(r *http.Request) (*AccessDetails, error)
 
 // FetchAuth ...
 func (m AuthModel) FetchAuth(authD *AccessDetails) (int64, error) {
-	userid, err := db.GetRedis().Get(authD.AccessUUID).Result()
+	userid, err := m.redisDB.Get(authD.AccessUUID).Result()
 	if err != nil {
 		return 0, err
 	}
@@ -163,7 +172,7 @@ func (m AuthModel) FetchAuth(authD *AccessDetails) (int64, error) {
 
 // DeleteAuth ...
 func (m AuthModel) DeleteAuth(givenUUID string) (int64, error) {
-	deleted, err := db.GetRedis().Del(givenUUID).Result()
+	deleted, err := m.redisDB.Del(givenUUID).Result()
 	if err != nil {
 		return 0, err
 	}

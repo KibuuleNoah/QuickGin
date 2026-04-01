@@ -125,7 +125,7 @@ ALTER SEQUENCE article_id_seq OWNED BY article.id;
 --
 
 CREATE TABLE "user" (
-    id bigint NOT NULL,
+    id text PRIMARY KEY NOT NULL 
     identifier character varying NOT NULL,
     password character varying NOT NULL,
     verified boolean DEFAULT false NOT NULL,
@@ -141,21 +141,21 @@ ALTER TABLE "user" OWNER TO tristar;
 -- Name: user_id_seq; Type: SEQUENCE; Schema: public; Owner: tristar
 --
 
-CREATE SEQUENCE user_id_seq
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-
-ALTER TABLE user_id_seq OWNER TO tristar;
-
+-- CREATE SEQUENCE user_id_seq
+--     START WITH 1
+--     INCREMENT BY 1
+--     NO MINVALUE
+--     NO MAXVALUE
+--     CACHE 1;
 --
--- Name: user_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: tristar
 --
-
-ALTER SEQUENCE user_id_seq OWNED BY "user".id;
+-- ALTER TABLE user_id_seq OWNER TO tristar;
+--
+-- --
+-- -- Name: user_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: tristar
+-- --
+--
+-- ALTER SEQUENCE user_id_seq OWNED BY "user".id;
 
 
 --
@@ -169,7 +169,7 @@ ALTER TABLE ONLY article ALTER COLUMN id SET DEFAULT nextval('article_id_seq'::r
 -- Name: id; Type: DEFAULT; Schema: public; Owner: tristar
 --
 
-ALTER TABLE ONLY "user" ALTER COLUMN id SET DEFAULT nextval('user_id_seq'::regclass);
+-- ALTER TABLE ONLY "user" ALTER COLUMN id SET DEFAULT nextval('user_id_seq'::regclass);
 
 
 --
@@ -206,24 +206,24 @@ SELECT pg_catalog.setval('user_id_seq', 1, false);
 -- Name: article_id; Type: CONSTRAINT; Schema: public; Owner: tristar; Tablespace:
 --
 
-ALTER TABLE ONLY article
-    ADD CONSTRAINT article_id PRIMARY KEY (id);
-
-
+-- ALTER TABLE ONLY article
+--     ADD CONSTRAINT article_id PRIMARY KEY (id);
 --
--- Name: user_id; Type: CONSTRAINT; Schema: public; Owner: tristar; Tablespace:
 --
-
-ALTER TABLE ONLY "user"
-    ADD CONSTRAINT user_id PRIMARY KEY (id);
-
-
+-- --
+-- -- Name: user_id; Type: CONSTRAINT; Schema: public; Owner: tristar; Tablespace:
+-- --
 --
--- Name: article_user_id; Type: FK CONSTRAINT; Schema: public; Owner: tristar
+-- ALTER TABLE ONLY "user"
+--     ADD CONSTRAINT user_id PRIMARY KEY (id);
 --
-
-ALTER TABLE ONLY article
-    ADD CONSTRAINT article_user_id FOREIGN KEY (user_id) REFERENCES "user"(id) ON UPDATE CASCADE ON DELETE CASCADE;
+--
+-- --
+-- -- Name: article_user_id; Type: FK CONSTRAINT; Schema: public; Owner: tristar
+-- --
+--
+-- ALTER TABLE ONLY article
+--     ADD CONSTRAINT article_user_id FOREIGN KEY (user_id) REFERENCES "user"(id) ON UPDATE CASCADE ON DELETE CASCADE;
 
 
 --

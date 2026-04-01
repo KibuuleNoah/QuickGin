@@ -1,6 +1,8 @@
 package controllers
 
 import (
+	"fmt"
+
 	"github.com/Massad/gin-boilerplate/forms"
 	"github.com/Massad/gin-boilerplate/models"
 
@@ -30,6 +32,7 @@ func (ctrl UserController) CreateUser(c *gin.Context) {
 	}
 
 	user, err := userModel.Create(form)
+	fmt.Println(err, "***")
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusNotAcceptable, gin.H{"message": err.Error()})
 		return

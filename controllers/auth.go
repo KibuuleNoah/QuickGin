@@ -4,8 +4,9 @@ import (
 	"fmt"
 	"net/http"
 	"os"
-	"strconv"
+	"strings"
 
+	"github.com/Massad/gin-boilerplate/db"
 	"github.com/Massad/gin-boilerplate/forms"
 	"github.com/Massad/gin-boilerplate/models"
 	"github.com/Massad/gin-boilerplate/services"
@@ -25,11 +26,21 @@ type AuthController struct {
 
 func NewAuthController() *AuthController {
 	return &AuthController{cfg: AuthControllerConfig{
-		AuthModel: models.AuthModel{},
+		AuthModel: *models.NewAuthModel(),
 		Asvc:      *services.NewAuthService(),
 	}}
 }
 
+// AuthWithPassword godoc
+// @Summary      Authenticate with password
+// @Description  Logs in a user using their identifier and password, returning a JWT access token and refresh token.
+// @Tags         auth
+// @Accept       json
+// @Produce      json
+// @Param        body  body      forms.AuthWithPasswordForm  true  "Login credentials"
+// @Success      200   {object}  map[string]interface{} "Successfully logged in with user and token data"
+// @Failure      406   {object}  map[string]string      "Invalid login details or validation error"
+// @Router       /auth/login-password [post]
 func (ctl AuthController) AuthWithPassword(c *gin.Context) {
 	var authForm forms.AuthWithPasswordForm
 
@@ -38,8 +49,6 @@ func (ctl AuthController) AuthWithPassword(c *gin.Context) {
 		c.AbortWithStatusJSON(http.StatusNotAcceptable, gin.H{"message": message})
 		return
 	}
-
-	fmt.Println(authForm)
 
 	user, token, err := ctl.cfg.Asvc.AuthWithPassword(authForm)
 	if err != nil {
@@ -50,7 +59,72 @@ func (ctl AuthController) AuthWithPassword(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "Successfully logged in", "user": user, "token": token})
 }
 
-func (ctl AuthController) AuthWithOTP(c *gin.Context) {}
+// AuthRequestOtp godoc
+// @Summary      Request an OTP
+// @Description  Generates and sends a One-Time Password (OTP) to the user's email or phone number.
+// @Tags         auth
+// @Accept       json
+// @Produce      json
+// @Param        body  body      forms.RequestOTPForm  true  "User identifier (email or phone)"
+// @Success      200   {object}  map[string]interface{} "OTP and OTPID generated successfully"
+// @Failure      400   {object}  map[string]string      "Invalid identifier or request body"
+// @Failure      500   {object}  map[string]string      "Internal server error generating OTP"
+// @Router       /auth/request-otp [post]
+func (ctl AuthController) AuthRequestOtp(c *gin.Context) {
+	var form forms.RequestOTPForm
+
+	if err := c.ShouldBindJSON(&form); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	if len(form.Identifier) < 1 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Identifier (email/phone) is required"})
+		return
+	}
+
+	otpSVC := services.NewOTPService(db.GetRedis())
+	ctx := c.Request.Context()
+
+	identifier := strings.ToLower(strings.TrimSpace(form.Identifier))
+	otp, userId, err := otpSVC.Generate(ctx, identifier)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not generate OTP: " + err.Error()})
+		return
+	}
+
+	fmt.Printf("*******OTP %s For User %s", otp, userId)
+
+	c.JSON(http.StatusOK, gin.H{"message": "OTP sent to " + form.Identifier, "userId": userId})
+}
+
+// AuthWithOTP godoc
+// @Summary      Verify OTP and authenticate
+// @Description  Validates the OTP. On success, creates the user if they don't exist and returns a JWT access token + refresh token (PocketBase-style).
+// @Tags         auth
+// @Accept       json
+// @Produce      json
+// @Param        body  body      forms.AuthWithOTPForm  true  "OTP verification details"
+// @Success      200   {object}  map[string]interface{} "Successfully logged in with user and token data"
+// @Failure      406   {object}  map[string]string      "Invalid login details or validation error"
+// @Router       /auth/verify-otp [post]
+func (ctl *AuthController) AuthWithOTP(c *gin.Context) {
+	var form forms.AuthWithOTPForm
+
+	if validationErr := c.ShouldBindJSON(&form); validationErr != nil {
+		message := forms.Translate(validationErr, forms.AuthWithPasswordFormMessages)
+		c.AbortWithStatusJSON(http.StatusNotAcceptable, gin.H{"message": message})
+		return
+	}
+
+	user, token, err := ctl.cfg.Asvc.AuthWithOTP(form)
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusNotAcceptable, gin.H{"message": "Invalid login details: " + err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Successfully logged in", "user": user, "token": token})
+}
 
 // Refresh Token godoc
 // @Summary Refresh Token example
@@ -98,7 +172,7 @@ func (ctl AuthController) Refresh(c *gin.Context) {
 			c.JSON(http.StatusUnauthorized, gin.H{"message": "Invalid authorization, please login again"})
 			return
 		}
-		userID, err := strconv.ParseInt(fmt.Sprintf("%.f", claims["user_id"]), 10, 64)
+		userID := fmt.Sprintf("%.f", claims["user_id"])
 		if err != nil {
 			c.JSON(http.StatusUnauthorized, gin.H{"message": "Invalid authorization, please login again"})
 			return
@@ -157,163 +231,3 @@ func (ctl AuthController) AuthLogout(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{"message": "Successfully logged out"})
 }
-
-// RequestOTP godoc
-// @Summary      Request a one-time password
-// @Description  Sends a 6-digit OTP to the provided email or phone number.
-// @Tags         auth
-// @Accept       json
-// @Produce      json
-// @Param        body  body      forms.RequestOTPForm  true  "email or phone"
-// @Success      200   {object}  map[string]string
-// @Router       /auth/request-otp [post]
-// func (ctl AuthController) RequestOTP(c *gin.Context) {
-// 	var form forms.RequestOTPForm
-// 	if err := c.ShouldBindJSON(&form); err != nil {
-// 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-// 		return
-// 	}
-//
-// 	if form.Email == nil && form.Phone == nil {
-// 		c.JSON(http.StatusBadRequest, gin.H{"error": "email or phone is required"})
-// 		return
-// 	}
-// 	if form.Email != nil && form.Phone != nil {
-// 		c.JSON(http.StatusBadRequest, gin.H{"error": "provide either email or phone, not both"})
-// 		return
-// 	}
-//
-// 	ctx := c.Request.Context()
-//
-// 	if form.Email != nil {
-// 		identifier := strings.ToLower(strings.TrimSpace(*form.Email))
-// 		otp, err := a.otp.Generate(ctx, identifier)
-// 		if err != nil {
-// 			c.JSON(http.StatusInternalServerError, gin.H{"error": "could not generate OTP"})
-// 			return
-// 		}
-// 		if err = a.mail.SendOTP(identifier, otp); err != nil {
-// 			c.JSON(http.StatusInternalServerError, gin.H{"error": "could not send OTP email"})
-// 			return
-// 		}
-// 		c.JSON(http.StatusOK, gin.H{"message": "OTP sent to email"})
-// 		return
-// 	}
-//
-// 	// Phone path
-// 	identifier := strings.TrimSpace(*form.Phone)
-// 	otp, err := a.otp.Generate(ctx, identifier)
-// 	if err != nil {
-// 		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not generate OTP"})
-// 		return
-// 	}
-// 	if err = a.sms.SendOTP(identifier, otp); err != nil {
-// 		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not send OTP SMS"})
-// 		return
-// 	}
-// 	c.JSON(http.StatusOK, gin.H{"message": "OTP sent to phone"})
-// }
-
-// VerifyOTP godoc
-// @Summary      Verify OTP and authenticate
-// @Description  Validates the OTP. On success, creates the user if they don't exist
-//
-//	and returns a JWT access token + refresh token (PocketBase-style).
-//
-// @Tags         auth
-// @Accept       json
-// @Produce      json
-// @Param        body  body      forms.VerifyOTPForm  true  "identifier + otp"
-// @Success      200   {object}  map[string]interface{}
-// @Router       /auth/verify-otp [post]
-
-// func (a *AuthController) VerifyOTP(c *gin.Context) {
-// 	var form forms.VerifyOTPForm
-// 	if err := c.ShouldBindJSON(&form); err != nil {
-// 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-// 		return
-// 	}
-//
-// 	if form.Email == nil && form.Phone == nil {
-// 		c.JSON(http.StatusBadRequest, gin.H{"error": "email or phone is required"})
-// 		return
-// 	}
-//
-// 	ctx := c.Request.Context()
-// 	var identifier string
-// 	isEmail := form.Email != nil
-//
-// 	if isEmail {
-// 		identifier = strings.ToLower(strings.TrimSpace(*form.Email))
-// 	} else {
-// 		identifier = strings.TrimSpace(*form.Phone)
-// 	}
-//
-// 	ok, err := a.otp.Verify(ctx, identifier, form.OTP)
-// 	if err != nil {
-// 		switch {
-// 		case errors.Is(err, services.ErrTooManyAttempts):
-// 			c.JSON(http.StatusTooManyRequests, gin.H{"error": "too many attempts, request a new OTP"})
-// 		case errors.Is(err, services.ErrOTPNotFound):
-// 			c.JSON(http.StatusUnauthorized, gin.H{"error": "OTP expired or not found"})
-// 		case errors.Is(err, services.ErrInvalidOTP):
-// 			c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid OTP"})
-// 		default:
-// 			c.JSON(http.StatusInternalServerError, gin.H{"error": "verification failed"})
-// 		}
-// 		return
-// 	}
-// 	if !ok {
-// 		c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid OTP"})
-// 		return
-// 	}
-//
-// 	// Upsert user — same as PocketBase: first verify = auto-register
-// 	var user interface{ GetID() string }
-// 	if isEmail {
-// 		u, err := a.userRepo.UpsertByEmail(ctx, identifier)
-// 		if err != nil {
-// 			c.JSON(http.StatusInternalServerError, gin.H{"error": "could not create user"})
-// 			return
-// 		}
-// 		accessToken, err := a.tokens.IssueAccessToken(u.ID)
-// 		if err != nil {
-// 			c.JSON(http.StatusInternalServerError, gin.H{"error": "could not issue token"})
-// 			return
-// 		}
-// 		refreshToken, err := a.tokens.IssueRefreshToken(ctx, u.ID)
-// 		if err != nil {
-// 			c.JSON(http.StatusInternalServerError, gin.H{"error": "could not issue refresh token"})
-// 			return
-// 		}
-// 		c.JSON(http.StatusOK, gin.H{
-// 			"token":         accessToken,
-// 			"refresh_token": refreshToken,
-// 			"record":        u,
-// 		})
-// 		return
-// 	}
-//
-// 	// Phone path
-// 	_ = user
-// 	u, err := a.userRepo.UpsertByPhone(ctx, identifier)
-// 	if err != nil {
-// 		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not create user"})
-// 		return
-// 	}
-// 	accessToken, err := a.tokens.IssueAccessToken(u.ID)
-// 	if err != nil {
-// 		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not issue token"})
-// 		return
-// 	}
-// 	refreshToken, err := a.tokens.IssueRefreshToken(ctx, u.ID)
-// 	if err != nil {
-// 		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not issue refresh token"})
-// 		return
-// 	}
-// 	c.JSON(http.StatusOK, gin.H{
-// 		"token":         accessToken,
-// 		"refresh_token": refreshToken,
-// 		"record":        u,
-// 	})
-// }
