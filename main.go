@@ -19,7 +19,7 @@ import (
 	ginSwagger "github.com/swaggo/gin-swagger"
 )
 
-// @title           Golang Gin Boilerplate
+// @title           QuickGin Boilerplate
 // @version         3.0
 // @description     A RESTful API boilerplate with Gin Framework, PostgreSQL, Redis and JWT authentication
 // @termsOfService  http://swagger.io/terms/
@@ -58,7 +58,7 @@ func main() {
 	r.Use(middleware.CORS())
 	r.Use(middleware.RequestID())
 
-	r.Use(gin.Logger()) // Log first
+	// r.Use(gin.Logger()) //****** Log first
 	r.Use(gzip.Gzip(gzip.DefaultCompression))
 
 	db.Init()
@@ -79,7 +79,7 @@ func main() {
 		authRoutes.POST("/with-password", auth.AuthWithPassword)
 		authRoutes.POST("/request-otp", auth.AuthRequestOtp)
 		authRoutes.POST("/with-otp", auth.AuthWithOTP)
-		authRoutes.POST("/token/refresh", auth.Refresh)
+		authRoutes.POST("/token/refresh", auth.RefreshToken)
 		authRoutes.POST("/logout", middleware.TokenAuth(), auth.AuthLogout)
 
 		/*** START Article ***/

@@ -17,11 +17,11 @@ type UserController struct{}
 var userModel = new(models.UserModel)
 
 // getUserID ...
-func getUserID(c *gin.Context) (userID int64) {
-	return c.MustGet("userID").(int64)
+func getUserID(c *gin.Context) (userID string) {
+	return c.MustGet("userID").(string)
 }
 
-func (ctrl UserController) CreateUser(c *gin.Context) {
+func (ctrl *UserController) CreateUser(c *gin.Context) {
 	var form forms.CreateUserForm
 
 	if validationErr := c.ShouldBindJSON(&form); validationErr != nil {

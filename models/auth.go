@@ -3,9 +3,9 @@ package models
 import (
 	"errors"
 	"fmt"
+	"log"
 	"net/http"
 	"os"
-	"strconv"
 	"strings"
 	"time"
 
@@ -15,9 +15,11 @@ import (
 	uuid "github.com/google/uuid"
 )
 
-type AuthResponse struct {
-	AccessToken  string `json:"access_token"`
-	RefreshToken string `json:"refresh_token"`
+type AuthTokenResponse struct {
+	AccessToken  string `json:"accessToken"`
+	RefreshToken string `json:"refreshToken"`
+	AtExpires    int64  `json:"atExpires"`
+	RtExpires    int64  `json:"rtExpires"`
 }
 
 // TokenDetails ...
@@ -33,13 +35,7 @@ type TokenDetails struct {
 // AccessDetails ...
 type AccessDetails struct {
 	AccessUUID string
-	UserID     int64
-}
-
-// Token ...
-type Token struct {
-	AccessToken  string `json:"access_token"`
-	RefreshToken string `json:"refresh_token"`
+	UserID     string
 }
 
 // AuthModel ...
@@ -54,7 +50,7 @@ func NewAuthModel() *AuthModel {
 }
 
 // CreateToken ...
-func (m AuthModel) CreateToken(userID string) (*TokenDetails, error) {
+func (m *AuthModel) CreateToken(userID string) (*TokenDetails, error) {
 
 	td := &TokenDetails{}
 	td.AtExpires = time.Now().Add(time.Minute * 15).Unix()
@@ -90,7 +86,7 @@ func (m AuthModel) CreateToken(userID string) (*TokenDetails, error) {
 }
 
 // CreateAuth ...
-func (m AuthModel) CreateAuth(userid string, td *TokenDetails) error {
+func (m *AuthModel) CreateAuth(userid string, td *TokenDetails) error {
 	at := time.Unix(td.AtExpires, 0) //converting Unix to UTC(to Time object)
 	rt := time.Unix(td.RtExpires, 0)
 	now := time.Now()
@@ -107,7 +103,7 @@ func (m AuthModel) CreateAuth(userid string, td *TokenDetails) error {
 }
 
 // ExtractToken ...
-func (m AuthModel) ExtractToken(r *http.Request) string {
+func (m *AuthModel) ExtractToken(r *http.Request) string {
 	bearToken := r.Header.Get("Authorization")
 	//normally Authorization the_token_xxx
 	strArr := strings.Split(bearToken, " ")
@@ -118,7 +114,7 @@ func (m AuthModel) ExtractToken(r *http.Request) string {
 }
 
 // VerifyToken ...
-func (m AuthModel) VerifyToken(r *http.Request) (*jwt.Token, error) {
+func (m *AuthModel) VerifyToken(r *http.Request) (*jwt.Token, error) {
 	tokenString := m.ExtractToken(r)
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 		//Make sure that the token method conform to "SigningMethodHMAC"
@@ -134,7 +130,7 @@ func (m AuthModel) VerifyToken(r *http.Request) (*jwt.Token, error) {
 }
 
 // ExtractTokenMetadata ...
-func (m AuthModel) ExtractTokenMetadata(r *http.Request) (*AccessDetails, error) {
+func (m *AuthModel) ExtractTokenMetadata(r *http.Request) (*AccessDetails, error) {
 	token, err := m.VerifyToken(r)
 	if err != nil {
 		return nil, err
@@ -149,9 +145,14 @@ func (m AuthModel) ExtractTokenMetadata(r *http.Request) (*AccessDetails, error)
 		return nil, errors.New("invalid access_uuid claim")
 	}
 
-	userID, err := strconv.ParseInt(fmt.Sprintf("%.f", claims["user_id"]), 10, 64)
-	if err != nil {
-		return nil, err
+	userIDRaw, ok := claims["user_id"]
+	if !ok {
+		return nil, errors.New("user_id not found in claims")
+	}
+
+	userID, ok := userIDRaw.(string)
+	if !ok {
+		return nil, errors.New("user_id is not a string")
 	}
 
 	return &AccessDetails{
@@ -160,21 +161,67 @@ func (m AuthModel) ExtractTokenMetadata(r *http.Request) (*AccessDetails, error)
 	}, nil
 }
 
-// FetchAuth ...
-func (m AuthModel) FetchAuth(authD *AccessDetails) (int64, error) {
-	userid, err := m.redisDB.Get(authD.AccessUUID).Result()
-	if err != nil {
-		return 0, err
+func (m *AuthModel) RefreshTokens(refreshToken string) (AuthTokenResponse, error) {
+
+	log.Println("***", refreshToken)
+	// Parse and Verify Token
+	token, err := jwt.Parse(refreshToken, func(token *jwt.Token) (interface{}, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+		}
+		return []byte(os.Getenv("REFRESH_SECRET")), nil
+	})
+
+	if err != nil || !token.Valid {
+		log.Println(err)
+		return AuthTokenResponse{}, fmt.Errorf("invalid or expired token")
 	}
-	userID, _ := strconv.ParseInt(userid, 10, 64)
-	return userID, nil
+
+	// Extract Claims
+	claims, ok := token.Claims.(jwt.MapClaims)
+	if !ok {
+		return AuthTokenResponse{}, fmt.Errorf("invalid claims")
+	}
+
+	refreshUUID, okUUID := claims["refresh_uuid"].(string)
+	userID, okUser := claims["user_id"].(string) // Combined string assertion and check
+
+	if !okUUID || !okUser {
+		return AuthTokenResponse{}, fmt.Errorf("missing token metadata")
+	}
+
+	// Revoke Old Token
+	deleted, delErr := m.DeleteAuth(refreshUUID)
+	if delErr != nil || deleted == 0 {
+		return AuthTokenResponse{}, fmt.Errorf("token already revoked or expired")
+	}
+
+	// Generate New Token Pair
+	ts, createErr := m.CreateToken(userID)
+	if createErr != nil {
+		return AuthTokenResponse{}, createErr
+	}
+
+	// Save New Metadata
+	if saveErr := m.CreateAuth(userID, ts); saveErr != nil {
+		return AuthTokenResponse{}, saveErr
+	}
+
+	return AuthTokenResponse{
+		AccessToken:  ts.AccessToken,
+		RefreshToken: ts.RefreshToken,
+		AtExpires:    ts.AtExpires,
+		RtExpires:    ts.RtExpires,
+	}, nil
+}
+
+// FetchAuth ...
+func (m *AuthModel) FetchAuth(authD *AccessDetails) (string, error) {
+	log.Println("*****", authD, m.redisDB)
+	return m.redisDB.Get(authD.AccessUUID).Result()
 }
 
 // DeleteAuth ...
-func (m AuthModel) DeleteAuth(givenUUID string) (int64, error) {
-	deleted, err := m.redisDB.Del(givenUUID).Result()
-	if err != nil {
-		return 0, err
-	}
-	return deleted, nil
+func (m *AuthModel) DeleteAuth(givenUUID string) (int64, error) {
+	return m.redisDB.Del(givenUUID).Result()
 }

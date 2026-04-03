@@ -1,8 +1,6 @@
 package controllers
 
 import (
-	"strconv"
-
 	"github.com/KibuuleNoah/QuickGin/forms"
 	"github.com/KibuuleNoah/QuickGin/models"
 
@@ -84,13 +82,7 @@ func (ctrl ArticleController) One(c *gin.Context) {
 
 	id := c.Param("id")
 
-	getID, err := strconv.ParseInt(id, 10, 64)
-	if getID == 0 || err != nil {
-		c.AbortWithStatusJSON(http.StatusNotFound, gin.H{"Message": "Invalid parameter"})
-		return
-	}
-
-	data, err := articleModel.One(userID, getID)
+	data, err := articleModel.One(userID, id)
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusNotFound, gin.H{"Message": "Article not found"})
 		return
@@ -115,12 +107,6 @@ func (ctrl ArticleController) Update(c *gin.Context) {
 
 	id := c.Param("id")
 
-	getID, err := strconv.ParseInt(id, 10, 64)
-	if getID == 0 || err != nil {
-		c.AbortWithStatusJSON(http.StatusNotFound, gin.H{"Message": "Invalid parameter"})
-		return
-	}
-
 	var form forms.CreateArticleForm
 
 	if validationErr := c.ShouldBindJSON(&form); validationErr != nil {
@@ -129,7 +115,7 @@ func (ctrl ArticleController) Update(c *gin.Context) {
 		return
 	}
 
-	err = articleModel.Update(userID, getID, form)
+	err := articleModel.Update(userID, id, form)
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusNotAcceptable, gin.H{"Message": "Article could not be updated"})
 		return
@@ -154,13 +140,7 @@ func (ctrl ArticleController) Delete(c *gin.Context) {
 
 	id := c.Param("id")
 
-	getID, err := strconv.ParseInt(id, 10, 64)
-	if getID == 0 || err != nil {
-		c.AbortWithStatusJSON(http.StatusNotFound, gin.H{"Message": "Invalid parameter"})
-		return
-	}
-
-	err = articleModel.Delete(userID, getID)
+	err := articleModel.Delete(userID, id)
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusNotAcceptable, gin.H{"Message": "Article could not be deleted"})
 		return

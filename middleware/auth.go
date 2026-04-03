@@ -1,30 +1,32 @@
 package middleware
 
 import (
+	"log"
 	"net/http"
 
 	"github.com/KibuuleNoah/QuickGin/models"
 	"github.com/gin-gonic/gin"
 )
 
-var authModel = new(models.AuthModel)
-
 // TokenAuth validates the JWT access token and sets userID in the context.
 func TokenAuth() gin.HandlerFunc {
+	authModel := models.NewAuthModel()
 	return func(c *gin.Context) {
-		tokenAuth, err := authModel.ExtractTokenMetadata(c.Request)
+		accessDetails, err := authModel.ExtractTokenMetadata(c.Request)
 		if err != nil {
+			log.Println(err)
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"message": "Authentication Required"})
 			return
 		}
 
-		userID, err := authModel.FetchAuth(tokenAuth)
-		if err != nil {
-			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"message": "Authentication Required"})
-			return
-		}
+		// log.Println("\n\n\n*****", tokenAuth)
+		// userID, err := authModel.FetchAuth(tokenAuth)
+		// if err != nil {
+		// 	c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"message": "Authentication Required"})
+		// 	return
+		// }
 
-		c.Set("userID", userID)
+		c.Set("userID", accessDetails.UserID)
 		c.Next()
 	}
 }

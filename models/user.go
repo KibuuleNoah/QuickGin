@@ -2,15 +2,16 @@ package models
 
 import (
 	"errors"
+
 	"github.com/KibuuleNoah/QuickGin/db"
 	"github.com/KibuuleNoah/QuickGin/forms"
-	"golang.org/x/crypto/bcrypt"
+	"github.com/KibuuleNoah/QuickGin/utils"
 )
 
 type UserAuthResponse struct {
-	User    User   `json:"user"`
-	Token   Token  `json:"token"`
-	Message string `json:"message"`
+	User    User              `json:"user"`
+	Token   AuthTokenResponse `json:"token"`
+	Message string            `json:"message"`
 }
 
 type MessageResponse struct {
@@ -22,24 +23,23 @@ type User struct {
 	ID          string `db:"id" json:"id"`
 	Identifier  string `db:"identifier" json:"identifier"`
 	Password    string `db:"password" json:"-"`
-	Verified    bool   `db:"verified"      json:"verified"`
+	Verified    bool   `db:"verified" json:"verified"`
 	Name        string `db:"name" json:"name"`
 	UpdatedAt   int64  `db:"updated_at" json:"-"`
 	CreatedAt   int64  `db:"created_at" json:"-"`
-	LastLoginAt int64  `db:"last_login_at" json:"last_login_at,omitempty"`
+	LastLoginAt int64  `db:"last_login_at" json:"lastLoginAt,omitempty"`
 }
 
 // UserModel ...
 type UserModel struct{}
 
-func HashPassword(password string) ([]byte, error) {
-
-	bytePassword := []byte(password)
-	return bcrypt.GenerateFromPassword(bytePassword, bcrypt.DefaultCost)
-}
-
 // Create New User ...
 func (m UserModel) Create(form forms.CreateUserForm) (user User, err error) {
+
+	// if utils.DetectIdentifierType(form.Identifier) == "invalid" {
+	// 	return user, errors.New()
+	// }
+
 	getDb := db.GetDB()
 
 	//Check if the user exists in database
@@ -54,7 +54,7 @@ func (m UserModel) Create(form forms.CreateUserForm) (user User, err error) {
 	}
 
 	if len(form.Password) > 0 {
-		password, err := HashPassword(form.Password)
+		password, err := utils.HashPassword(form.Password)
 		if err != nil {
 			return user, errors.New("something went wrong, please try again later")
 		}

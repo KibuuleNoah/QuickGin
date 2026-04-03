@@ -15,6 +15,80 @@
 # curl -X GET http://127.0.0.1:9000/v1/articles
 
 # curl -X POST -H "Content-Type: application/json" -d '{"Identifier":"tristar3@gmail.com"}' http://127.0.0.1:9000/v1/auth/request-otp
-curl -X POST -H "Content-Type: application/json" -d '{"userId":"Ffibc9lZ", "otp": "832974"}' http://127.0.0.1:9000/v1/auth/with-otp
+# curl -X POST -H "Content-Type: application/json" -d '{"userId":"Ffibc9lZ", "otp": "832974"}' http://127.0.0.1:9000/v1/auth/with-otp
 
-# {"message":"Successfully logged in","token":{"access_token":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhY2Nlc3NfdXVpZCI6IjIxMGQxMDI1LTFlYjgtNDdhMy04NDQ1LTEwOWM2YjMyZTAzMSIsImF1dGhvcml6ZWQiOnRydWUsImV4cCI6MTc3NDk2MTgzMCwidXNlcl9pZCI6Mn0.Zn_AGxZaxNwzdc5PekW51p5mw56gPwOFrmRB7MrbZIw","refresh_token":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NzU1NjU3MzAsInJlZnJlc2hfdXVpZCI6ImMyMWQ5MGQxLTc0YWQtNDAwOC04NGU0LWZmY2NmODgyMWY1ZSIsInVzZXJfaWQiOjJ9.FOL1L8Bx8V2Yo0teE1AWL7iRVUxIqiHr3M9moX9jV5g"},"user":{"id":2,"identifier":"tristar3@gmail.com","verified":false,"name":"Tristar"}}%
+# {"message":"Successfully logged in","token":{"
+# access_token":"
+# "},"user":{"id":2,"identifier":"tristar3@gmail.com","verified":false,"name":"Tristar"}}%
+#
+#!/bin/bash
+
+# Set your JWT token here
+TOKEN=$(jq -r '.accessToken' token.json)
+RTOKEN=$(jq -r '.refreshToken' token.json)
+
+
+BASE_URL="http://127.0.0.1:9000/v1" 
+
+create_user() {
+  curl -X POST \
+    $BASE_URL/user/ \
+    -H "Content-Type: application/json" \
+    -d '{"name":"'$1'","Identifier":"'$2'","password":"'$3'"}'
+}
+
+
+auth_with_password() {
+  curl -X POST \
+    $BASE_URL/auth/with-password \
+    -H "Content-Type: application/json" \
+    -d '{"Identifier":"'$1'","password":"'$2'"}'
+}
+
+
+get_articles() {
+  curl -X GET $BASE_URL/articles \
+       -H "Authorization: Bearer: $TOKEN"
+}
+
+request_otp() {
+  curl -X POST \
+    $BASE_URL/auth/request-otp \
+    -H "Content-Type: application/json" \
+    -d '{"Identifier":"'$1'"}'
+}
+
+
+auth_with_otp() {
+  curl -X POST \
+    $BASE_URL/auth/with-otp \
+    -H "Content-Type: application/json" \
+    -d '{"userId":"'$1'", "otp": "'$2'"}'
+}
+
+auth_token_refresh(){
+  curl -X POST \
+      $BASE_URL/auth/token/refresh \
+      -H "Content-Type: application/json" \
+      -d '{"token":"'$RTOKEN'"}'
+
+}
+
+
+
+
+
+# Example JSON file (data.json): { "name": "John", "age": 30 }
+
+
+
+
+# create_user "Moxie" "moxie3@gmail.com" "Moxie@@3"
+
+# auth_with_password "tristar3@gmail.com" "woshwosh"
+# get_articles
+# request_otp "moxie3@gmail.com"
+# auth_with_otp "QMSpesgN" "015012"
+# auth_token_refresh $RTOKEN
+get_articles
+

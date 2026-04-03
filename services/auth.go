@@ -7,9 +7,9 @@ import (
 	"github.com/KibuuleNoah/QuickGin/db"
 	"github.com/KibuuleNoah/QuickGin/forms"
 	"github.com/KibuuleNoah/QuickGin/models"
+	"github.com/KibuuleNoah/QuickGin/utils"
 	"github.com/go-redis/redis/v7"
 	"github.com/jmoiron/sqlx"
-	"golang.org/x/crypto/bcrypt"
 )
 
 type AuthServiceConfig struct {
@@ -31,20 +31,15 @@ func NewAuthService() *AuthService {
 }
 
 // Login With Password...
-func (s *AuthService) AuthWithPassword(form forms.AuthWithPasswordForm) (user models.User, token models.Token, err error) {
+func (s *AuthService) AuthWithPassword(form forms.AuthWithPasswordForm) (user models.User, token models.AuthTokenResponse, err error) {
 
 	err = s.cfg.DB.Get(&user, "SELECT id, identifier, password, name, updated_at, created_at FROM public.user WHERE identifier=LOWER($1) LIMIT 1", form.Identifier)
-
 	if err != nil {
 		return user, token, err
 	}
 
 	//Compare the password form and database if match
-	bytePassword := []byte(form.Password)
-	byteHashedPassword := []byte(user.Password)
-
-	err = bcrypt.CompareHashAndPassword(byteHashedPassword, bytePassword)
-
+	err = utils.CompareHashAndPassword(user.Password, form.Password)
 	if err != nil {
 		return user, token, err
 	}
@@ -61,11 +56,13 @@ func (s *AuthService) AuthWithPassword(form forms.AuthWithPasswordForm) (user mo
 
 	token.AccessToken = tokenDetails.AccessToken
 	token.RefreshToken = tokenDetails.RefreshToken
+	token.AtExpires = tokenDetails.AtExpires
+	token.RtExpires = tokenDetails.RtExpires
 
 	return user, token, nil
 }
 
-func (s *AuthService) AuthWithOTP(form forms.AuthWithOTPForm) (user models.User, token models.Token, err error) {
+func (s *AuthService) AuthWithOTP(form forms.AuthWithOTPForm) (user models.User, token models.AuthTokenResponse, err error) {
 	otpSVC := NewOTPService(s.cfg.rDB)
 	ctx := context.Background()
 
@@ -95,6 +92,8 @@ func (s *AuthService) AuthWithOTP(form forms.AuthWithOTPForm) (user models.User,
 
 	token.AccessToken = tokenDetails.AccessToken
 	token.RefreshToken = tokenDetails.RefreshToken
+	token.AtExpires = tokenDetails.AtExpires
+	token.RtExpires = tokenDetails.RtExpires
 
 	return user, token, err
 }
