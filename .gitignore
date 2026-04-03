@@ -16,3 +16,4 @@ cert/
 tmp/
 # BUILD #
 ./gin-boilerplate
+token.json
