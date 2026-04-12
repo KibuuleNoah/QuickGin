@@ -1,0 +1,60 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --color-brand-50:  oklch(99.1%  0.006 227.4);
+  --color-brand-100: oklch(97.25% 0.017 227.4);
+  --color-brand-200: oklch(84.64% 0.052 227.4);
+  --color-brand-300: oklch(77.11% 0.077 227.4);
+  --color-brand-400: oklch(69.89% 0.097 227.4);
+  --color-brand-500: oklch(63.05% 0.112 227.4);
+  --color-brand-600: oklch(53.66% 0.094 227.4);
+  --color-brand-700: oklch(43.81% 0.075 227.4);
+  --color-brand-800: oklch(33.41% 0.055 227.4);
+  --color-brand-900: oklch(22.09% 0.033 227.4);
+
+  --color-slate-100: oklch(90.54% 0.003 218.5);
+  --color-slate-200: oklch(81.04% 0.006 218.5);
+  --color-slate-300: oklch(71%    0.01  218.5);
+  --color-slate-400: oklch(60.86% 0.014 218.5);
+  --color-slate-500: oklch(50.07% 0.017 218.5);
+  --color-slate-600: oklch(43%    0.015 218.5);
+  --color-slate-700: oklch(35.38% 0.012 218.5);
+  --color-slate-800: oklch(27.64% 0.007 218.5);
+  --color-slate-900: oklch(18.95% 0.004 218.5);
+
+  --animate-ripple: ripple 3s linear infinite;
+
+  @keyframes ripple {
+    0%   { transform: scale(1); opacity: 1; }
+    100% { transform: scale(2); opacity: 0; }
+  }
+}
+
+@layer theme {
+  :root, :host {
+    @variant dark {
+      --color-brand-900: oklch(97.25% 0.017 227.4);
+      --color-brand-800: oklch(84.64% 0.052 227.4);
+      --color-brand-700: oklch(77.11% 0.077 227.4);
+      --color-brand-600: oklch(69.89% 0.097 227.4);
+      --color-brand-500: oklch(63.05% 0.112 227.4);
+      --color-brand-400: oklch(53.66% 0.094 227.4);
+      --color-brand-300: oklch(43.81% 0.075 227.4);
+      --color-brand-200: oklch(33.41% 0.055 227.4);
+      --color-brand-100: oklch(22.09% 0.033 227.4);
+      --color-brand-50:  oklch(22.09% 0.033 227.4);
+
+      --color-slate-900: oklch(90.54% 0.003 218.5);
+      --color-slate-800: oklch(81.04% 0.006 218.5);
+      --color-slate-700: oklch(71%    0.01  218.5);
+      --color-slate-600: oklch(60.86% 0.014 218.5);
+      --color-slate-500: oklch(50.07% 0.017 218.5);
+      --color-slate-400: oklch(43%    0.015 218.5);
+      --color-slate-300: oklch(35.38% 0.012 218.5);
+      --color-slate-200: oklch(27.64% 0.007 218.5);
+      --color-slate-100: oklch(18.95% 0.004 218.5);
+    }
+  }
+}

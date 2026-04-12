@@ -61,19 +61,19 @@ type ArticleModel struct{}
 
 // Create ...
 func (m ArticleModel) Create(userID string, form forms.CreateArticleForm) (articleID int64, err error) {
-	err = db.GetDB().QueryRow("INSERT INTO public.article(user_id, title, content) VALUES($1, $2, $3) RETURNING id", userID, form.Title, form.Content).Scan(&articleID)
+	err = db.AppDB().QueryRow("INSERT INTO public.article(user_id, title, content) VALUES($1, $2, $3) RETURNING id", userID, form.Title, form.Content).Scan(&articleID)
 	return articleID, err
 }
 
 // One ...
 func (m ArticleModel) One(userID, id string) (article Article, err error) {
-	err = db.GetDB().Get(&article, "SELECT a.id, a.title, a.content, a.updated_at, a.created_at, json_build_object('id', u.id, 'name', u.name, 'email', u.email) AS user FROM public.article a LEFT JOIN public.user u ON a.user_id = u.id WHERE a.user_id=$1 AND a.id=$2 LIMIT 1", userID, id)
+	err = db.AppDB().Get(&article, "SELECT a.id, a.title, a.content, a.updated_at, a.created_at, json_build_object('id', u.id, 'name', u.name, 'email', u.email) AS user FROM public.article a LEFT JOIN public.user u ON a.user_id = u.id WHERE a.user_id=$1 AND a.id=$2 LIMIT 1", userID, id)
 	return article, err
 }
 
 // All ...
 func (m ArticleModel) All(userID string) (articles []DataList, err error) {
-	// err = db.GetDB().Select(&articles, "SELECT COALESCE(array_to_json(array_agg(row_to_json(d))), '[]') AS data, (SELECT row_to_json(n) FROM ( SELECT count(a.id) AS total FROM public.article AS a WHERE a.user_id=$1 LIMIT 1 ) n ) AS meta FROM ( SELECT a.id, a.title, a.content, a.updated_at, a.created_at, json_build_object('id', u.id, 'name', u.name, 'email', u.email) AS user FROM public.article a LEFT JOIN public.user u ON a.user_id = u.id WHERE a.user_id=$1 ORDER BY a.id DESC) d", userID)
+	// err = db.AppDB().Select(&articles, "SELECT COALESCE(array_to_json(array_agg(row_to_json(d))), '[]') AS data, (SELECT row_to_json(n) FROM ( SELECT count(a.id) AS total FROM public.article AS a WHERE a.user_id=$1 LIMIT 1 ) n ) AS meta FROM ( SELECT a.id, a.title, a.content, a.updated_at, a.created_at, json_build_object('id', u.id, 'name', u.name, 'email', u.email) AS user FROM public.article a LEFT JOIN public.user u ON a.user_id = u.id WHERE a.user_id=$1 ORDER BY a.id DESC) d", userID)
 
 	MockManyDataLists := func(count int) []DataList {
 		list := make([]DataList, count)
@@ -100,7 +100,7 @@ func (m ArticleModel) Update(userID string, id string, form forms.CreateArticleF
 	// 	return err
 	// }
 
-	operation, err := db.GetDB().Exec("UPDATE public.article SET title=$3, content=$4 WHERE id=$1 AND user_id=$2", id, userID, form.Title, form.Content)
+	operation, err := db.AppDB().Exec("UPDATE public.article SET title=$3, content=$4 WHERE id=$1 AND user_id=$2", id, userID, form.Title, form.Content)
 	if err != nil {
 		return err
 	}
@@ -116,7 +116,7 @@ func (m ArticleModel) Update(userID string, id string, form forms.CreateArticleF
 // Delete ...
 func (m ArticleModel) Delete(userID, id string) (err error) {
 
-	operation, err := db.GetDB().Exec("DELETE FROM public.article WHERE id=$1 AND user_id=$2", id, userID)
+	operation, err := db.AppDB().Exec("DELETE FROM public.article WHERE id=$1 AND user_id=$2", id, userID)
 	if err != nil {
 		return err
 	}

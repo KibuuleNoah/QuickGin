@@ -40,7 +40,7 @@ func (m UserModel) Create(form forms.CreateUserForm) (user User, err error) {
 	// 	return user, errors.New()
 	// }
 
-	getDb := db.GetDB()
+	getDb := db.AppDB()
 
 	//Check if the user exists in database
 	var checkUser int64
@@ -53,7 +53,7 @@ func (m UserModel) Create(form forms.CreateUserForm) (user User, err error) {
 		return user, errors.New("email/phone no. already exists")
 	}
 
-	if len(form.Password) > 0 {
+	if len(form.Password) >= 8 {
 		password, err := utils.HashPassword(form.Password)
 		if err != nil {
 			return user, errors.New("something went wrong, please try again later")
@@ -77,6 +77,6 @@ func (m UserModel) Create(form forms.CreateUserForm) (user User, err error) {
 // Fetch One User of the currect struct by id
 // same as  err := DB.Get(&user, "SELECT id, identifier, name, updated_at, created_at FROM public.user WHERE id=$1 LIMIT 1", form.UserID)
 // func (u *User) () (err error) {
-// 	err = db.GetDB().Get(u, "SELECT id, identifier, name, updated_at, created_at FROM public.user WHERE id=$1 LIMIT 1", u.ID)
+// 	err = db.AppDB().Get(u, "SELECT id, identifier, name, updated_at, created_at FROM public.user WHERE id=$1 LIMIT 1", u.ID)
 // d	return err
 // }

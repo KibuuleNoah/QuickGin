@@ -1,0 +1,436 @@
+<!doctype html>
+<html lang="en" class="light">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Win Hub — Auth</title>
+    <!-- <link rel="stylesheet" href="/static/css/app.css" /> -->
+    <link rel="stylesheet" href="/dist/app.css" />
+  </head>
+
+  <body class="bg-brand-50 text-brand-900">
+    <!-- ── Toast Notifications ── -->
+    <div
+      class="fixed top-4 right-4 z-[999] flex flex-col gap-2"
+      x-data
+      x-show="$store.ui.toasts.length > 0"
+    >
+      <template x-for="toast in $store.ui.toasts" :key="toast.id">
+        <div
+          x-transition:enter="transition ease-out duration-300"
+          x-transition:enter-start="opacity-0 translate-x-4"
+          x-transition:enter-end="opacity-100 translate-x-0"
+          x-transition:leave="transition ease-in duration-200"
+          x-transition:leave-start="opacity-100"
+          x-transition:leave-end="opacity-0"
+          :class="{
+            'bg-emerald-500': toast.type === 'success',
+            'bg-rose-500':    toast.type === 'error',
+            'bg-sky-500':     toast.type === 'info'
+          }"
+          class="text-white px-4 py-3 rounded-lg shadow-lg text-sm font-medium flex items-center gap-2 cursor-pointer"
+          @click="$store.ui.dismiss(toast.id)"
+          x-text="toast.message"
+        ></div>
+      </template>
+    </div>
+
+    <!-- ── Auth Flow ── -->
+    <div
+      x-data="authFlow"
+      @auth-next.window="next()"
+      @auth-back.window="back()"
+      class="min-h-screen flex items-center justify-center relative overflow-hidden bg-brand-50 transition-colors duration-300"
+    >
+      <!-- Atmosphere blobs -->
+      <div
+        class="pointer-events-none absolute -top-40 -left-40 w-[520px] h-[520px] rounded-full bg-brand-50 blur-[130px]"
+      ></div>
+      <div
+        class="pointer-events-none absolute -bottom-32 -right-32 w-[420px] h-[420px] rounded-full bg-brand-50 blur-[110px]"
+      ></div>
+
+      <!-- Card -->
+      <div
+        class="relative z-10 w-full max-w-[420px] mx-4 bg-brand-50 border border-brand-400 rounded-2xl px-8 pt-8 pb-10 shadow-[0_20px_60px_rgba(0,0,0,0.12)]"
+      >
+        <!-- Theme toggle -->
+        <button
+          @click="$store.ui.toggleTheme()"
+          class="absolute top-4 right-4 p-2 rounded-lg hover:bg-brand-100 transition-colors"
+          title="Toggle theme"
+        >
+          <svg
+            x-show="$store.ui.theme === 'light'"
+            xmlns="http://www.w3.org/2000/svg"
+            class="w-4 h-4"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.5"
+              d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"
+            />
+          </svg>
+          <svg
+            x-show="$store.ui.theme === 'dark'"
+            xmlns="http://www.w3.org/2000/svg"
+            class="w-4 h-4"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <circle cx="12" cy="12" r="5" stroke-width="1.5" />
+            <path
+              stroke-linecap="round"
+              stroke-width="1.5"
+              d="M12 2v2m0 16v2M4.22 4.22l1.42 1.42m12.72 12.72l1.42 1.42M2 12h2m16 0h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"
+            />
+          </svg>
+        </button>
+
+        <!-- Logo -->
+        <div class="flex items-center gap-2.5 mb-6">
+          <span class="text-[20px] text-brand-700 leading-none">◈</span>
+          <span
+            class="font-bold text-[19px] text-brand-900 tracking-tight"
+            style="font-family: &quot;Syne&quot;, sans-serif"
+            >Win Hub</span
+          >
+          <span
+            class="ml-auto text-[10px] font-semibold tracking-widest uppercase text-brand-500 border border-brand-500/25 bg-brand-500/5 px-2 py-0.5 rounded-full"
+            >Beta</span
+          >
+        </div>
+
+        <!-- Divider -->
+        <div class="relative h-px mb-6">
+          <div
+            class="absolute inset-0 bg-gradient-to-r from-transparent via-brand-300 to-transparent"
+          ></div>
+          <div
+            class="absolute left-1/2 -translate-x-1/2 top-0 w-16 h-px bg-brand-500/40"
+          ></div>
+        </div>
+
+        <!-- Step Indicator (hidden on success step) -->
+        <div class="mb-7" x-show="step < 3">
+          <!-- Dots -->
+          <div class="flex items-center">
+            <template x-for="(meta, i) in stepMeta" :key="i">
+              <div class="flex items-center flex-1 last:flex-none">
+                <!-- Dot -->
+                <div
+                  :class="{
+                    'border-brand-900 ring-4 ring-brand-500': i === step,
+                    'border-brand-700 bg-brand-700':           i < step,
+                    'border-slate-400 bg-brand-50':            i > step
+                  }"
+                  class="w-6 h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-all duration-300"
+                  :style="i === step ? 'transform: scale(1.2)' : ''"
+                >
+                  <!-- Check icon for completed steps -->
+                  <svg
+                    x-show="i < step"
+                    width="10"
+                    height="10"
+                    viewBox="0 0 10 10"
+                  >
+                    <polyline
+                      points="1.5,5 4,7.5 8.5,2.5"
+                      stroke="white"
+                      stroke-width="1.8"
+                      fill="none"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    />
+                  </svg>
+                </div>
+                <!-- Connector line -->
+                <div
+                  x-show="i < stepMeta.length - 1"
+                  class="flex-1 h-px mx-1 bg-brand-700 origin-left transition-transform duration-400"
+                  :style="i < step ? 'transform: scaleX(1)' : 'transform: scaleX(0)'"
+                ></div>
+              </div>
+            </template>
+          </div>
+          <!-- Step label -->
+          <p class="text-[11px] text-slate-600 tracking-wide mt-2.5">
+            Step <span x-text="step + 1"></span> of 3 —
+            <span x-text="currentMeta.label"></span>
+          </p>
+        </div>
+
+        <!-- ── Step 0: Entry ── -->
+        <div x-show="step === 0" x-data="authEntry" x-transition>
+          <h2
+            class="text-[22px] font-bold tracking-tight text-brand-900 mb-1.5"
+          >
+            Welcome to Win Hub
+          </h2>
+          <p class="text-sm text-slate-600 leading-relaxed mb-6">
+            Sign in or create an account — it takes seconds.
+          </p>
+
+          <!-- Mode toggle -->
+          <div
+            class="flex bg-brand-100 rounded-xl p-1 mb-5 gap-1 relative overflow-hidden"
+          >
+            <button
+              @click="switchMode('email')"
+              :class="mode === 'email' ? 'bg-white text-brand-500 shadow-sm' : 'text-slate-500 hover:text-brand-900'"
+              class="relative flex-1 py-2 flex items-center justify-center gap-2 rounded-lg text-[13px] font-medium cursor-pointer transition-all duration-300"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="w-4 h-4"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                stroke-width="1.5"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+                />
+              </svg>
+              Email
+            </button>
+            <button
+              @click="switchMode('mobile')"
+              :class="mode === 'mobile' ? 'bg-white text-brand-500 shadow-sm' : 'text-slate-500 hover:text-brand-900'"
+              class="relative flex-1 py-2 flex items-center justify-center gap-2 rounded-lg text-[13px] font-medium cursor-pointer transition-all duration-300"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="w-4 h-4"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                stroke-width="1.5"
+              >
+                <rect x="7" y="2" width="10" height="20" rx="2" ry="2" />
+                <line x1="12" y1="18" x2="12.01" y2="18" />
+              </svg>
+              Mobile
+            </button>
+          </div>
+
+          <!-- Identifier input -->
+          <label
+            class="block text-[11px] font-semibold tracking-widest uppercase text-slate-500 mb-2"
+            x-text="mode === 'email' ? 'Email address' : 'Phone number'"
+          ></label>
+          <input
+            :type="mode === 'email' ? 'email' : 'tel'"
+            :placeholder="mode === 'email' ? 'you@example.com' : '+256 700 000 000'"
+            :value="identifier"
+            @input="setIdentifier($event.target.value)"
+            @blur="validateOnBlur()"
+            :class="identifierErr ? 'border-red-500 ring-1 ring-red-500' : 'border-slate-300 focus:border-brand-500 focus:ring-4 focus:ring-brand-500/20'"
+            class="h-12 w-full px-3 py-2 rounded-sm rounded-tl-xl rounded-br-xl border bg-white outline-none text-slate-900 placeholder:text-slate-400 transition-all duration-200"
+          />
+          <p
+            x-show="identifierErr"
+            x-text="identifierErr"
+            class="text-xs text-red-500 font-medium mt-1"
+          ></p>
+          <p
+            class="text-xs text-slate-500 mt-2 mb-6 leading-relaxed"
+            x-text="mode === 'email' ? 'We\'ll send a one-time code to this email.' : 'We\'ll send a one-time code via SMS.'"
+          ></p>
+
+          <button
+            @click="submit()"
+            :disabled="!canSubmit || loading"
+            class="w-full mt-1 py-3.5 px-5 rounded-xl text-[14px] font-bold tracking-wide bg-brand-500 text-white shadow-sm hover:bg-brand-700 active:bg-brand-800 transition-all duration-200 cursor-pointer border-none disabled:bg-slate-300 disabled:text-slate-500 disabled:cursor-not-allowed"
+          >
+            <span x-show="!loading">Continue →</span>
+            <span x-show="loading">Sending…</span>
+          </button>
+        </div>
+
+        <!-- ── Step 1: OTP ── -->
+        <div
+          style="display: none"
+          x-show="step === 1"
+          x-data="authOtp"
+          x-transition
+        >
+          <h2
+            class="text-[22px] font-bold tracking-tight text-brand-900 mb-1.5"
+          >
+            Check your inbox
+          </h2>
+          <p class="text-sm text-slate-600 leading-relaxed mb-6">
+            Enter the 6-digit code we just sent to
+          </p>
+          <h2 class="text-center mb-2">
+            <span
+              class="bg-slate-100 text-brand-700 p-1 rounded-lg font-bold"
+              x-text="$store.auth.maskedIdentifier"
+            ></span>
+          </h2>
+
+          <label
+            class="block text-[11px] font-semibold tracking-widest uppercase text-slate-500 mb-2"
+            >Verification code</label
+          >
+          <div class="flex gap-2 mb-1">
+            <template x-for="(digit, i) in digits" :key="i">
+              <input
+                :id="`otp-${i}`"
+                maxlength="1"
+                :value="digit"
+                @keydown="handleKeydown($event, i)"
+                @focus="$event.target.select()"
+                :class="digit ? 'border-brand-500 text-brand-500 bg-brand-500/5' : 'border-slate-300'"
+                class="flex-1 aspect-square max-w-[52px] h-10 rounded-xl border text-center text-[20px] font-bold outline-none transition-all duration-200 bg-white text-brand-500 focus:border-brand-500 focus:ring-2 focus:ring-brand-200"
+              />
+            </template>
+          </div>
+
+          <div class="flex justify-between items-center mt-2 mb-6">
+            <p class="text-xs text-slate-600 font-bold leading-relaxed">
+              Didn't get it?
+              <button
+                @click="resend()"
+                :disabled="!timeLeft.isExpired"
+                class="text-blue-500 text-xs underline underline-offset-2 bg-transparent border-none cursor-pointer p-0 disabled:text-slate-400"
+              >
+                Resend code
+              </button>
+            </p>
+            <p class="font-bold text-orange-400 text-xs">
+              New Code In <span x-text="timeLeft.formatted"></span>
+            </p>
+          </div>
+
+          <div class="flex gap-2.5 mt-1">
+            <button
+              @click="$dispatch('auth-back')"
+              class="py-3.5 px-5 rounded-xl border border-brand-300 bg-transparent text-slate-600 text-sm font-medium cursor-pointer transition-all hover:border-slate-400 hover:text-brand-900 shrink-0"
+            >
+              ← Back
+            </button>
+            <button
+              @click="verify()"
+              :disabled="!filled"
+              class="flex-1 py-3.5 px-5 rounded-xl text-[14px] font-bold tracking-wide bg-brand-500 text-white shadow-sm hover:bg-brand-700 transition-all duration-200 cursor-pointer border-none disabled:bg-slate-300 disabled:text-slate-500 disabled:cursor-not-allowed"
+            >
+              Verify →
+            </button>
+          </div>
+        </div>
+
+        <!-- ── Step 2: Profile Setup ── -->
+        <div x-show="step === 2" x-data="authProfile" x-transition>
+          <h2
+            class="text-[22px] font-bold tracking-tight text-brand-900 mb-1.5"
+          >
+            Set up your profile
+          </h2>
+          <p class="text-sm text-slate-600 leading-relaxed mb-6">
+            Choose a username and tell us your name.
+          </p>
+
+          <label
+            class="block text-[11px] font-semibold tracking-widest uppercase text-slate-500 mb-2"
+            >Full name</label
+          >
+          <input
+            type="text"
+            placeholder="e.g. Noah Kiggundu"
+            x-model="name"
+            class="h-12 w-full px-3 py-2 rounded-sm rounded-tl-xl rounded-br-xl border border-slate-300 bg-white outline-none text-slate-900 placeholder:text-slate-400 focus:border-brand-500 focus:ring-4 focus:ring-brand-500/20 transition-all duration-200 mb-4"
+          />
+
+          <label
+            class="block text-[11px] font-semibold tracking-widest uppercase text-slate-500 mb-2"
+            >Username</label
+          >
+          <input
+            type="text"
+            placeholder="your_handle"
+            :value="username"
+            @input="username = sanitizeUsername($event.target.value)"
+            class="h-12 w-full px-3 py-2 rounded-sm rounded-tl-xl rounded-br-xl border border-slate-300 bg-white outline-none text-slate-900 placeholder:text-slate-400 focus:border-brand-500 focus:ring-4 focus:ring-brand-500/20 transition-all duration-200"
+          />
+          <p class="text-xs text-slate-400 mt-2 mb-6 leading-relaxed">
+            This is how other users will see you on Win Hub.
+          </p>
+
+          <div class="flex gap-2.5 mt-1">
+            <button
+              @click="$dispatch('auth-back')"
+              class="py-3.5 px-5 rounded-xl border border-brand-300 bg-transparent text-slate-600 text-sm font-medium cursor-pointer transition-all hover:border-slate-400 shrink-0"
+            >
+              ← Back
+            </button>
+            <button
+              @click="submit()"
+              :disabled="!canSubmit || loading"
+              class="flex-1 py-3.5 px-5 rounded-xl text-[14px] font-bold tracking-wide bg-brand-500 text-white shadow-sm hover:bg-brand-700 transition-all duration-200 cursor-pointer border-none disabled:bg-slate-300 disabled:text-slate-500 disabled:cursor-not-allowed"
+            >
+              <span x-show="!loading">Let's go</span>
+              <span x-show="loading">Saving…</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- ── Step 3: Success ── -->
+        <div
+          x-show="step >= 3"
+          x-data="authSuccess"
+          x-transition
+          class="flex flex-col items-center text-center gap-2 py-4"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="w-16 h-16 text-green-500 mb-2"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            stroke-width="1.5"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+            />
+          </svg>
+          <h2 class="text-[22px] font-bold tracking-tight text-green-500 mb-1">
+            You're in!
+          </h2>
+          <p class="text-sm text-slate-600 leading-relaxed mb-6">
+            Welcome to WinHub. Start scratching and winning.
+          </p>
+          <button
+            @click="goToDashboard()"
+            class="w-full py-3.5 px-5 rounded-xl text-[14px] font-bold bg-brand-500 text-white hover:bg-brand-700 transition-all cursor-pointer border-none"
+          >
+            Go to Dashboard →
+          </button>
+        </div>
+      </div>
+
+      <!-- Footer -->
+      <p class="absolute bottom-5 text-[11px] text-slate-400/60 tracking-wide">
+        © <span x-text="new Date().getFullYear()"></span> Win Hub · All rights
+        reserved
+      </p>
+    </div>
+
+    <script src="//cdn.jsdelivr.net/npm/eruda"></script>
+    <script>
+      eruda.init();
+    </script>
+    <!-- <script type="module" src="/static/js/app.js"></script> -->
+    <script type="module" src="/dist/app.js"></script>
+  </body>
+</html>

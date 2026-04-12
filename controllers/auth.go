@@ -72,25 +72,48 @@ func (ctl *AuthController) AuthWithPassword(c *gin.Context) {
 func (ctl *AuthController) AuthRequestOtp(c *gin.Context) {
 	var form forms.RequestOTPForm
 
-	if validationErr := c.ShouldBindJSON(&form); validationErr != nil {
-		message := forms.Translate(validationErr, forms.RequestOTPFormMessages)
-		c.AbortWithStatusJSON(http.StatusNotAcceptable, gin.H{"message": message})
-		return
+	var json map[string]interface{}
+	if err := c.BindJSON(&json); err != nil {
+		// handle error
 	}
+
+	if json["Identifier"] != nil {
+		key, ok := json["Identifier"].(string)
+		if ok && strings.HasPrefix(key, "otp-resend-") {
+			identifier, err := ctl.cfg.Asvc.QueryOtpResendKeyOwner(key)
+
+			if err != nil {
+				c.AbortWithStatusJSON(http.StatusNotAcceptable, gin.H{"message": "Invalid or Expired otp resend key"})
+				return
+			}
+
+			form.Identifier = identifier
+		}
+	}
+
+	if form.Identifier == "" {
+		if validationErr := c.ShouldBindJSON(&form); validationErr != nil {
+			message := forms.Translate(validationErr, forms.RequestOTPFormMessages)
+			c.AbortWithStatusJSON(http.StatusNotAcceptable, gin.H{"message": message})
+			return
+		}
+	}
+
+	log.Println(form, form.Identifier)
 
 	otpSVC := services.NewOTPService(db.GetRedis())
 	ctx := c.Request.Context()
 
 	identifier := strings.ToLower(strings.TrimSpace(form.Identifier))
-	otp, userId, expiry, err := otpSVC.Generate(ctx, identifier)
+	otp, otpResendKey, userId, expiry, err := otpSVC.Generate(ctx, identifier)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not generate OTP: " + err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "could not generate OTP: " + err.Error()})
 		return
 	}
 
 	fmt.Printf("*******OTP %s For User %s", otp, userId)
 
-	c.JSON(http.StatusOK, gin.H{"message": "OTP sent successfully ", "userId": userId, "expiry": expiry})
+	c.JSON(http.StatusOK, gin.H{"message": "OTP sent successfully ", "userId": userId, "otpResendKey": otpResendKey, "expiry": expiry})
 }
 
 // AuthWithOTP godoc

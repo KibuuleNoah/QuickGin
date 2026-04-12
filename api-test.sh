@@ -67,7 +67,7 @@ auth_with_otp() {
 }
 
 auth_token_refresh(){
-  curl -X POST \
+  curl -X POST 
       $BASE_URL/auth/token/refresh \
       -H "Content-Type: application/json" \
       -d '{"token":"'$RTOKEN'"}'
@@ -83,12 +83,12 @@ auth_token_refresh(){
 
 
 
-# create_user "Moxie" "moxie3@gmail.com" "Moxie@@3"
+
+
+# create_user "Moxie" "moxie3@gmail.com"
 
 # auth_with_password "tristar3@gmail.com" "woshwosh"
 # get_articles
-# request_otp "moxie3@gmail.com"
+request_otp "moxie3@gmail.com"
 # auth_with_otp "QMSpesgN" "015012"
 # auth_token_refresh $RTOKEN
-get_articles
-

@@ -4,7 +4,7 @@ package forms
 type CreateUserForm struct {
 	Name       string `form:"name" json:"name" binding:"required,min=3,max=20,username"`
 	Identifier string `form:"identifier" json:"identifier" binding:"required,identifier"`
-	Password   string `form:"password" json:"password" binding:"required,strong_password,min=8,max=32"`
+	Password   string `form:"password" json:"password" binding:"strong_password"`
 }
 
 // RegisterMessages defines validation error messages for register form.
@@ -20,7 +20,6 @@ var CreateUserFormMessages = ValidationMessages{
 		"identifier": "Please enter a valid Identifier email/phone no.",
 	},
 	"Password": {
-		"required":        "Please enter your password",
 		"min":             "Your password should be between 8 and 32 characters",
 		"max":             "Your password should be between 8 and 32 characters",
 		"strong_password": "Password must be 8–32 characters and include at least one uppercase letter, one lowercase letter, one number, and one special character (!@#$ etc.). Avoid sequences like 'abc' or '123', repeated characters like 'aaa', and commonly used passwords.",

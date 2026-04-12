@@ -6,15 +6,15 @@ import (
 
 	"github.com/KibuuleNoah/QuickGin/db"
 	"github.com/KibuuleNoah/QuickGin/forms"
+	"github.com/KibuuleNoah/QuickGin/internal/cache"
 	"github.com/KibuuleNoah/QuickGin/models"
 	"github.com/KibuuleNoah/QuickGin/utils"
-	"github.com/go-redis/redis/v7"
 	"github.com/jmoiron/sqlx"
 )
 
 type AuthServiceConfig struct {
 	DB        *sqlx.DB
-	rDB       *redis.Client
+	cache     cache.Cache
 	AuthModel models.AuthModel
 }
 
@@ -24,8 +24,8 @@ type AuthService struct {
 
 func NewAuthService() *AuthService {
 	return &AuthService{cfg: AuthServiceConfig{
-		DB:        db.GetDB(),
-		rDB:       db.GetRedis(),
+		DB:        db.AppDB(),
+		cache:     db.AppCache(),
 		AuthModel: *models.NewAuthModel(),
 	}}
 }
@@ -63,7 +63,7 @@ func (s *AuthService) AuthWithPassword(form forms.AuthWithPasswordForm) (user mo
 }
 
 func (s *AuthService) AuthWithOTP(form forms.AuthWithOTPForm) (user models.User, token models.AuthTokenResponse, err error) {
-	otpSVC := NewOTPService(s.cfg.rDB)
+	otpSVC := NewOTPService()
 	ctx := context.Background()
 
 	ok, err := otpSVC.Verify(ctx, form.OTP, form.UserID)
@@ -96,4 +96,8 @@ func (s *AuthService) AuthWithOTP(form forms.AuthWithOTPForm) (user models.User,
 	token.RtExpires = tokenDetails.RtExpires
 
 	return user, token, err
+}
+
+func (s *AuthService) QueryOtpResendKeyOwner(otpResendKey string) (string, error) {
+	return s.cfg.cache.Get(otpResendKey)
 }

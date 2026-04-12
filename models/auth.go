@@ -9,8 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/KibuuleNoah/QuickGin/db"
-	redis "github.com/go-redis/redis/v7"
+	"github.com/KibuuleNoah/QuickGin/internal/cache"
 	jwt "github.com/golang-jwt/jwt/v4"
 	uuid "github.com/google/uuid"
 )
@@ -40,13 +39,11 @@ type AccessDetails struct {
 
 // AuthModel ...
 type AuthModel struct {
-	redisDB *redis.Client
+	cache cache.Cache
 }
 
 func NewAuthModel() *AuthModel {
-	return &AuthModel{
-		redisDB: db.GetRedis(),
-	}
+	return &AuthModel{}
 }
 
 // CreateToken ...
@@ -91,11 +88,11 @@ func (m *AuthModel) CreateAuth(userid string, td *TokenDetails) error {
 	rt := time.Unix(td.RtExpires, 0)
 	now := time.Now()
 
-	errAccess := m.redisDB.Set(td.AccessUUID, userid, at.Sub(now)).Err()
+	errAccess := m.cache.Set(td.AccessUUID, userid, at.Sub(now))
 	if errAccess != nil {
 		return errAccess
 	}
-	errRefresh := m.redisDB.Set(td.RefreshUUID, userid, rt.Sub(now)).Err()
+	errRefresh := m.cache.Set(td.RefreshUUID, userid, rt.Sub(now))
 	if errRefresh != nil {
 		return errRefresh
 	}
@@ -191,8 +188,8 @@ func (m *AuthModel) RefreshTokens(refreshToken string) (AuthTokenResponse, error
 	}
 
 	// Revoke Old Token
-	deleted, delErr := m.DeleteAuth(refreshUUID)
-	if delErr != nil || deleted == 0 {
+	delErr := m.DeleteAuth(refreshUUID)
+	if delErr != nil {
 		return AuthTokenResponse{}, fmt.Errorf("token already revoked or expired")
 	}
 
@@ -217,11 +214,10 @@ func (m *AuthModel) RefreshTokens(refreshToken string) (AuthTokenResponse, error
 
 // FetchAuth ...
 func (m *AuthModel) FetchAuth(authD *AccessDetails) (string, error) {
-	log.Println("*****", authD, m.redisDB)
-	return m.redisDB.Get(authD.AccessUUID).Result()
+	return m.cache.Get(authD.AccessUUID)
 }
 
 // DeleteAuth ...
-func (m *AuthModel) DeleteAuth(givenUUID string) (int64, error) {
-	return m.redisDB.Del(givenUUID).Result()
+func (m *AuthModel) DeleteAuth(givenUUID string) error {
+	return m.cache.Delete(givenUUID)
 }

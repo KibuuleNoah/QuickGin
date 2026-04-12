@@ -177,8 +177,13 @@ func hasRepeatingChars(password string) bool {
 // Password string `binding:"required,strong_password"`
 func ValidateStrongPassword(fl validator.FieldLevel) bool {
 	password, ok := fl.Field().Interface().(string)
-	if !ok || password == "" {
+	if !ok {
 		return false
+	}
+
+	// password was not supplied
+	if password == "" {
+		return true
 	}
 
 	// Reject invalid UTF-8 early.

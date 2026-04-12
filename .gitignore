@@ -17,3 +17,4 @@ tmp/
 # BUILD #
 ./gin-boilerplate
 token.json
+web/node_modules/

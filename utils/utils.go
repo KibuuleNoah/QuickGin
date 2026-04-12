@@ -2,6 +2,7 @@ package utils
 
 import (
 	"crypto/rand"
+	"encoding/base64"
 	"errors"
 	"fmt"
 	"math/big"
@@ -65,4 +66,12 @@ func CompareHashAndPassword(passwordHash string, password string) error {
 	bytePassword := []byte(password)
 
 	return bcrypt.CompareHashAndPassword(byteHashedPassword, bytePassword)
+}
+
+func RandomString(length int) (string, error) {
+	bytes := make([]byte, length)
+	if _, err := rand.Read(bytes); err != nil {
+		return "", err
+	}
+	return base64.StdEncoding.EncodeToString(bytes)[:length], nil
 }

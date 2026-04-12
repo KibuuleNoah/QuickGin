@@ -2,9 +2,7 @@ package main
 
 import (
 	"log"
-	"net/http"
 	"os"
-	"runtime"
 
 	"github.com/KibuuleNoah/QuickGin/controllers"
 	"github.com/KibuuleNoah/QuickGin/db"
@@ -64,6 +62,8 @@ func main() {
 	db.Init()
 	db.InitRedis(1)
 
+	controllers.NewWebController(r)
+
 	v1 := r.Group("/v1")
 	{
 		/*** START USER ***/
@@ -95,20 +95,20 @@ func main() {
 
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerfiles.Handler))
 
-	r.LoadHTMLGlob("./public/html/*")
-
-	r.Static("/public", "./public")
-
-	r.GET("/", func(c *gin.Context) {
-		c.HTML(http.StatusOK, "index.html", gin.H{
-			"ginBoilerplateVersion": "v3.0",
-			"goVersion":             runtime.Version(),
-		})
-	})
-
-	r.NoRoute(func(c *gin.Context) {
-		c.HTML(404, "404.html", gin.H{})
-	})
+	// r.LoadHTMLGlob("./public/html/*")
+	//
+	// r.Static("/public", "./public")
+	//
+	// r.GET("/", func(c *gin.Context) {
+	// 	c.HTML(http.StatusOK, "index.html", gin.H{
+	// 		"ginBoilerplateVersion": "v3.0",
+	// 		"goVersion":             runtime.Version(),
+	// 	})
+	// })
+	//
+	// r.NoRoute(func(c *gin.Context) {
+	// 	c.HTML(404, "404.html", gin.H{})
+	// })
 
 	port := os.Getenv("PORT")
 
