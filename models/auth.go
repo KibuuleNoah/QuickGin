@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/KibuuleNoah/QuickGin/internal/cache"
+	"github.com/KibuuleNoah/QuickGin/models/cache"
 	jwt "github.com/golang-jwt/jwt/v4"
 	uuid "github.com/google/uuid"
 )
@@ -214,7 +214,17 @@ func (m *AuthModel) RefreshTokens(refreshToken string) (AuthTokenResponse, error
 
 // FetchAuth ...
 func (m *AuthModel) FetchAuth(authD *AccessDetails) (string, error) {
-	return m.cache.Get(authD.AccessUUID)
+	val, ok := m.cache.Get(authD.AccessUUID)
+	if !ok {
+		return "", errors.New("Key Not Found")
+	}
+
+	str, ok := val.(string)
+	if !ok {
+		return "", errors.New("Failed to convert to string")
+	}
+
+	return str, nil
 }
 
 // DeleteAuth ...

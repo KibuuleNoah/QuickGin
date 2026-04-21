@@ -1,8 +1,6 @@
 package controllers
 
 import (
-	"log"
-
 	"github.com/KibuuleNoah/QuickGin/forms"
 	"github.com/KibuuleNoah/QuickGin/models"
 
@@ -31,13 +29,12 @@ func (ctrl *UserController) CreateUser(c *gin.Context) {
 		return
 	}
 
-	log.Println(form)
-	// user, err := userModel.Create(form)
-	// fmt.Println(err, "***")
-	// if err != nil {
-	// 	c.AbortWithStatusJSON(http.StatusNotAcceptable, gin.H{"message": err.Error()})
-	// 	return
-	// }
+	// log.Println(form)
+	user, err := userModel.Create(form)
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusNotAcceptable, gin.H{"message": err.Error()})
+		return
+	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "Successfully created", "user": models.UserModel{}})
+	c.JSON(http.StatusOK, gin.H{"message": "Successfully created", "user": user})
 }

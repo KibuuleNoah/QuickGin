@@ -34,7 +34,7 @@ create_user() {
   curl -X POST \
     $BASE_URL/user/ \
     -H "Content-Type: application/json" \
-    -d '{"name":"'$1'","Identifier":"'$2'","password":"'$3'"}'
+    -d '{"name":"'$1'","identifier":"'$2'","password":"'$3'"}'
 }
 
 
@@ -42,7 +42,7 @@ auth_with_password() {
   curl -X POST \
     $BASE_URL/auth/with-password \
     -H "Content-Type: application/json" \
-    -d '{"Identifier":"'$1'","password":"'$2'"}'
+    -d '{"identifier":"'$1'","password":"'$2'"}'
 }
 
 
@@ -55,7 +55,7 @@ request_otp() {
   curl -X POST \
     $BASE_URL/auth/request-otp \
     -H "Content-Type: application/json" \
-    -d '{"Identifier":"'$1'"}'
+    -d '{"identifier":"'$1'"}'
 }
 
 
@@ -85,10 +85,10 @@ auth_token_refresh(){
 
 
 
-# create_user "Moxie" "moxie3@gmail.com"
+# create_user "tristar" "tristar3@gmail.com"
 
 # auth_with_password "tristar3@gmail.com" "woshwosh"
 # get_articles
-request_otp "moxie3@gmail.com"
+request_otp "tristar3@gmail.com"
 # auth_with_otp "QMSpesgN" "015012"
 # auth_token_refresh $RTOKEN

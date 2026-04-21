@@ -6,8 +6,9 @@ import (
 
 	"github.com/KibuuleNoah/QuickGin/db"
 	"github.com/KibuuleNoah/QuickGin/forms"
-	"github.com/KibuuleNoah/QuickGin/internal/cache"
+
 	"github.com/KibuuleNoah/QuickGin/models"
+	"github.com/KibuuleNoah/QuickGin/models/cache"
 	"github.com/KibuuleNoah/QuickGin/utils"
 	"github.com/jmoiron/sqlx"
 )
@@ -99,5 +100,15 @@ func (s *AuthService) AuthWithOTP(form forms.AuthWithOTPForm) (user models.User,
 }
 
 func (s *AuthService) QueryOtpResendKeyOwner(otpResendKey string) (string, error) {
-	return s.cfg.cache.Get(otpResendKey)
+	val, ok := s.cfg.cache.Get(otpResendKey)
+	if !ok {
+		return "", errors.New("Key Not Found")
+	}
+
+	str, ok := val.(string)
+	if !ok {
+		return "", errors.New("Failed to convert to string")
+	}
+
+	return str, nil
 }

@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/KibuuleNoah/QuickGin/db"
 	"github.com/KibuuleNoah/QuickGin/forms"
 	"github.com/KibuuleNoah/QuickGin/models"
 	"github.com/KibuuleNoah/QuickGin/services"
@@ -72,36 +71,27 @@ func (ctl *AuthController) AuthWithPassword(c *gin.Context) {
 func (ctl *AuthController) AuthRequestOtp(c *gin.Context) {
 	var form forms.RequestOTPForm
 
-	var json map[string]interface{}
-	if err := c.BindJSON(&json); err != nil {
-		// handle error
+	if validationErr := c.ShouldBindJSON(&form); validationErr != nil {
+		message := forms.Translate(validationErr, forms.RequestOTPFormMessages)
+		log.Println(validationErr, &form, form)
+		c.AbortWithStatusJSON(http.StatusNotAcceptable, gin.H{"message": message})
+		return
 	}
 
-	if json["Identifier"] != nil {
-		key, ok := json["Identifier"].(string)
-		if ok && strings.HasPrefix(key, "otp-resend-") {
-			identifier, err := ctl.cfg.Asvc.QueryOtpResendKeyOwner(key)
+	if strings.HasPrefix(form.Identifier, "otp-resend-") {
+		identifier, err := ctl.cfg.Asvc.QueryOtpResendKeyOwner(form.Identifier)
 
-			if err != nil {
-				c.AbortWithStatusJSON(http.StatusNotAcceptable, gin.H{"message": "Invalid or Expired otp resend key"})
-				return
-			}
-
-			form.Identifier = identifier
-		}
-	}
-
-	if form.Identifier == "" {
-		if validationErr := c.ShouldBindJSON(&form); validationErr != nil {
-			message := forms.Translate(validationErr, forms.RequestOTPFormMessages)
-			c.AbortWithStatusJSON(http.StatusNotAcceptable, gin.H{"message": message})
+		if err != nil {
+			c.AbortWithStatusJSON(http.StatusNotAcceptable, gin.H{"message": "Invalid or Expired otp resend key"})
 			return
 		}
+
+		form.Identifier = identifier
 	}
 
-	log.Println(form, form.Identifier)
+	log.Println(form, form.Identifier, "OTP Request Form")
 
-	otpSVC := services.NewOTPService(db.GetRedis())
+	otpSVC := services.NewOTPService()
 	ctx := c.Request.Context()
 
 	identifier := strings.ToLower(strings.TrimSpace(form.Identifier))
@@ -192,8 +182,8 @@ func (ctl *AuthController) AuthLogout(c *gin.Context) {
 		return
 	}
 
-	deleted, delErr := ctl.cfg.AuthModel.DeleteAuth(au.AccessUUID)
-	if delErr != nil || deleted == 0 {
+	delErr := ctl.cfg.AuthModel.DeleteAuth(au.AccessUUID)
+	if delErr != nil {
 		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"message": "Invalid request"})
 		return
 	}

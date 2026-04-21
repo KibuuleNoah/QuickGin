@@ -4,10 +4,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
 	"time"
 
 	"github.com/KibuuleNoah/QuickGin/db"
-	"github.com/KibuuleNoah/QuickGin/internal/cache"
+	"github.com/KibuuleNoah/QuickGin/models"
+	"github.com/KibuuleNoah/QuickGin/models/cache"
+	"github.com/KibuuleNoah/QuickGin/utils"
 	"github.com/jmoiron/sqlx"
 )
 
@@ -35,105 +38,92 @@ func NewOTPService() *OTPService {
 
 // Generate creates a 6-digit OTP, stores it in Redis, and returns it.
 // The key is "otp:<identifier>" where identifier is an e-mail or E.164 phone number.
-
 func (s *OTPService) Generate(ctx context.Context, identifier string) (otp string, otpResendKey string, userId string, expiry time.Time, err error) {
-	return "", "", "", time.Time{}, errors.New("user does not exist")
+	var user models.User
+	err = s.DB.Get(&user, "SELECT id, identifier, password, name, updated_at, created_at FROM public.user WHERE identifier=LOWER($1) LIMIT 1", identifier)
+	if err != nil {
+		return "", "", "", time.Time{}, errors.New("user does not exist")
+	}
 
-	// var user models.User
-	// err = s.DB.Get(&user, "SELECT id, identifier, password, name, updated_at, created_at FROM public.user WHERE identifier=LOWER($1) LIMIT 1", identifier)
-	// if err != nil {
-	// 	return "", "", "", time.Time{}, errors.New("user does not exist")
-	// }
-	//
-	// otpKey := otpKeyPrefix + user.ID
-	// dailyKey := otpMaxDailyRequestsPrefix + user.ID
-	//
-	// // Check Max Daily Limit
-	// dailyCount, err := s.cache.Get(dailyKey)
-	// if err != nil && err != redis.Nil {
-	// 	return "", "", "", time.Time{}, ErrOTPMaxDailyRequestsHit
-	// }
-	//
-	//
-	// log.Println("dailyCount**** ", dailyCount)
-	// if dailyCount >= otpMaxDailyRequests {
-	// 	return "", "", "", time.Time{}, errors.New("daily otp limit reached")
-	// }
-	//
-	// // Check Cool Down
-	// _, err = s.cache.Get(otpKey)
-	// if err == nil {
-	// 	return "", "", "", time.Time{}, ErrOTPCoolDownActive
-	// } else if err != redis.Nil {
-	// 	return "", "", "", time.Time{}, err
-	// }
-	//
-	// // Generate and Save
-	// otp, err = utils.GenerateSecureOTP()
-	// if err != nil {
-	// 	return "", "", "", time.Time{}, err
-	// }
-	//
-	// // Calculate expiry time based on otpTTL
-	// expiry = time.Now().Add(otpTTL)
-	//
-	// pipe := s.rdb.Pipeline()
-	//
-	// randStr, err := utils.RandomString(6)
-	// otpResendKey = fmt.Sprintf("otp-resend-%s%s", randStr, user.ID)
-	//
-	// pipe.Set(,otpResendKey, identifier, 24*time.Hour)
-	//
-	// // Set the OTP with cooldown TTL
-	// pipe.Set(otpKey, otp, otpTTL)
-	//
-	// // ReSet the OTP attempts counter
-	// pipe.Set(otpAttPrefix+user.ID, 0, otpTTL)
-	//
-	// // Increment daily counter and set 24h expiry
-	// pipe.Incr(dailyKey)
-	//
-	// pipe.Expire(dailyKey, 24*time.Hour)
-	//
-	// _, err = pipe.Exec()
-	//
-	// return otp, otpResendKey, user.ID, expiry, err
+	otpKey := otpKeyPrefix + user.ID
+	dailyKey := otpMaxDailyRequestsPrefix + user.ID
+
+	// Check Max Daily Limit
+	val, ok := s.cache.Get(dailyKey)
+	dailyCount, _ := val.(int) // Cast to int
+
+	if ok && dailyCount >= otpMaxDailyRequests {
+		return "", "", "", time.Time{}, errors.New("daily otp limit reached")
+	}
+
+	// Check Cool Down
+	if _, exists := s.cache.Get(otpKey); exists {
+		return "", "", "", time.Time{}, errors.New("otp cooldown active")
+	}
+
+	//Generate OTP
+	otp, err = utils.GenerateSecureOTP()
+	if err != nil {
+		return "", "", "", time.Time{}, err
+	}
+
+	expiry = time.Now().Add(otpTTL)
+	randStr, _ := utils.RandomString(6)
+	otpResendKey = fmt.Sprintf("otp-resend-%s%s", randStr, user.ID)
+
+	//SAVE TO CACHE
+
+	// Set Resend Key
+	s.cache.Set(otpResendKey, identifier, 24*time.Hour)
+
+	// Set OTP with cooldown
+	s.cache.Set(otpKey, otp, otpTTL)
+
+	// Reset attempts
+	s.cache.Set(otpAttPrefix+user.ID, 0, otpTTL)
+
+	// Update Daily Counter
+	s.cache.Set(dailyKey, dailyCount+1, 24*time.Hour)
+
+	return otp, otpResendKey, user.ID, expiry, nil
 }
 
 // Verify checks the OTP for the given identifier.
 // Returns true on success and deletes the stored OTP so it cannot be reused.
 // Returns false + a descriptive error on failure.
+
 func (s *OTPService) Verify(ctx context.Context, otp string, userId string) (bool, error) {
-	// attKey := otpAttPrefix + userId
-	// otpKey := otpKeyPrefix + userId
-	//
-	// // Increment attempt counter before checking — prevents timing-based brute force
-	// attempts, err := s.rdb.Incr(attKey).Result()
-	// if err != nil {
-	// 	return false, fmt.Errorf("track attempts: %w", err)
-	// }
-	// // Give the attempt key the same TTL as the OTP itself so it auto-cleans
-	// s.rdb.Expire(attKey, otpTTL)
-	//
-	// log.Println("****", attempts, otpMaxAttempts)
-	// if attempts > otpMaxAttempts {
-	// 	return false, ErrTooManyAttempts
-	// }
-	//
-	// stored, err := s.rdb.Get(otpKey).Result()
-	// if err == redis.Nil {
-	// 	return false, ErrOTPNotFound
-	// }
-	// if err != nil {
-	// 	return false, fmt.Errorf("get otp: %w", err)
-	// }
-	//
-	// if stored != otp {
-	// 	return false, ErrInvalidOTP
-	// }
-	//
-	// // Delete both keys on success — OTP is single-use
-	// s.rdb.Del(otpKey, attKey)
+	attKey := otpAttPrefix + userId
+	otpKey := otpKeyPrefix + userId
+
+	// Handle Attempt Counter
+	val, ok := s.cache.Get(attKey)
+	attempts, _ := val.(int)
+	attempts++
+
+	// Update attempts in cache with the same TTL as OTP
+	s.cache.Set(attKey, attempts, otpTTL)
+
+	log.Println("****", attempts, otpMaxAttempts)
+	if attempts > otpMaxAttempts {
+		return false, ErrTooManyAttempts
+	}
+
+	// Check if OTP exists
+	storedVal, ok := s.cache.Get(otpKey)
+	if !ok {
+		return false, ErrOTPNotFound
+	}
+
+	stored, ok := storedVal.(string)
+	if !ok || stored != otp {
+		return false, ErrInvalidOTP
+	}
+
+	// On success Clean up single-use keys
+	s.cache.Delete(otpKey)
+	s.cache.Delete(attKey)
+
 	return true, nil
 }
 

@@ -1,38 +1,39 @@
 package db
 
 import (
+	"fmt"
 	"log"
+	"os"
 
-	"github.com/KibuuleNoah/QuickGin/internal/cache"
+	"github.com/KibuuleNoah/QuickGin/models/cache"
 	"github.com/jmoiron/sqlx"
 
-	// _ "github.com/lib/pq"
-	_ "modernc.org/sqlite"
+	_ "github.com/lib/pq"
 )
 
 var dbConn *sqlx.DB
 var appCache cache.Cache
 
 // Init connects to PostgreSQL using environment variables.
-func InitDB() {
-	// sslMode := "disable"
-	// if os.Getenv("SSL") == "TRUE" {
-	// 	sslMode = "require"
-	// }
+func InitAppDB() {
+	sslMode := "disable"
+	if os.Getenv("SSL") == "TRUE" {
+		sslMode = "require"
+	}
 
-	// 	dbinfo := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=%s",
-	// 		os.Getenv("DB_HOST"),
-	// 		os.Getenv("DB_PORT"),
-	// 		os.Getenv("DB_USER"),
-	// 		os.Getenv("DB_PASS"),
-	// 		os.Getenv("DB_NAME"),
-	// 		sslMode,
-	// 	)
-	//
+	dbinfo := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=%s",
+		os.Getenv("DB_HOST"),
+		os.Getenv("DB_PORT"),
+		os.Getenv("DB_USER"),
+		os.Getenv("DB_PASS"),
+		os.Getenv("DB_NAME"),
+		sslMode,
+	)
+
 	var err error
-	// 	dbConn, err = sqlx.Connect("postgres", dbinfo)
+	dbConn, err = sqlx.Connect("postgres", dbinfo)
 
-	dbConn, err = sqlx.Connect("sqlite", "file:sqlite3.db")
+	// dbConn, err = sqlx.Connect("sqlite", "file:sqlite3.db")
 	if err != nil {
 		log.Fatalln(err)
 	}

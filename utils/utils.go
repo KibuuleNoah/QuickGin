@@ -23,9 +23,13 @@ func GenerateSecureOTP() (string, error) {
 	return fmt.Sprintf("%06d", n.Int64()), nil
 }
 
-// DetectType checks if a string is a valid email or mobile number (E.164 format)
+// DetectType checks if a string is a valid email or mobile number or otp-resend-key (E.164 format)
 func DetectIdentifierType(input string) string {
 	input = strings.TrimSpace(input)
+
+	if strings.HasPrefix(input, "otp-resend-") {
+		return "otp-resend"
+	}
 
 	// Check for Email using the standard library
 	if _, err := mail.ParseAddress(input); err == nil {

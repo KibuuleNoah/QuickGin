@@ -59,8 +59,8 @@ func main() {
 	// r.Use(gin.Logger()) //****** Log first
 	r.Use(gzip.Gzip(gzip.DefaultCompression))
 
-	db.Init()
-	db.InitRedis(1)
+	db.InitAppDB()
+	db.InitAppCache()
 
 	controllers.NewWebController(r)
 
@@ -114,17 +114,17 @@ func main() {
 
 	log.Printf("\n\n PORT: %s \n ENV: %s \n SSL: %s \n Version: %s \n\n", port, os.Getenv("ENV"), os.Getenv("SSL"), os.Getenv("API_VERSION"))
 
-	if os.Getenv("SSL") == "TRUE" {
-		SSLKeys := &struct {
-			CERT string
-			KEY  string
-		}{
-			CERT: "./cert/myCA.cer",
-			KEY:  "./cert/myCA.key",
-		}
-
-		r.RunTLS(":"+port, SSLKeys.CERT, SSLKeys.KEY)
-	} else {
-		r.Run(":" + port)
-	}
+	// if os.Getenv("SSL") == "TRUE" {
+	// 	SSLKeys := &struct {
+	// 		CERT string
+	// 		KEY  string
+	// 	}{
+	// 		CERT: "./cert/myCA.cer",
+	// 		KEY:  "./cert/myCA.key",
+	// 	}
+	//
+	// 	r.RunTLS(":"+port, SSLKeys.CERT, SSLKeys.KEY)
+	// } else {
+	r.Run(":" + port)
+	// }
 }
