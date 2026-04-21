@@ -6,11 +6,6 @@ import (
 	"time"
 )
 
-type cacheItem struct {
-	Value      []byte // JSON data (acts like Redis strings)
-	Expiration time.Time
-}
-
 type memoryCache struct {
 	data sync.Map
 }
@@ -21,20 +16,20 @@ func NewMemoryCache() Cache {
 	return mc
 }
 
-func (m *memoryCache) Get(key string) (interface{}, bool) {
+func (m *memoryCache) Get(key string) (CacheItem, bool) {
 	val, ok := m.data.Load(key)
 	if !ok {
-		return nil, false
+		return CacheItem{}, false
 	}
 
-	item := val.(cacheItem)
+	item := val.(CacheItem)
 	if time.Now().After(item.Expiration) {
 		m.data.Delete(key)
-		return nil, false
+		return CacheItem{}, false
 	}
 
 	// Return the JSON string so it mimics the Redis return type
-	return string(item.Value), true
+	return item, true
 }
 
 func (m *memoryCache) Set(key string, value interface{}, exp time.Duration) error {
@@ -43,7 +38,7 @@ func (m *memoryCache) Set(key string, value interface{}, exp time.Duration) erro
 		return err
 	}
 
-	m.data.Store(key, cacheItem{
+	m.data.Store(key, CacheItem{
 		Value:      jsonData,
 		Expiration: time.Now().Add(exp),
 	})
@@ -60,7 +55,7 @@ func (m *memoryCache) startSweeper() {
 	ticker := time.NewTicker(1 * time.Minute)
 	for range ticker.C {
 		m.data.Range(func(key, value interface{}) bool {
-			item := value.(cacheItem)
+			item := value.(CacheItem)
 			if time.Now().After(item.Expiration) {
 				m.data.Delete(key)
 			}

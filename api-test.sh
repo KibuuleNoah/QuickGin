@@ -24,8 +24,11 @@
 #!/bin/bash
 
 # Set your JWT token here
-TOKEN=$(jq -r '.accessToken' token.json)
-RTOKEN=$(jq -r '.refreshToken' token.json)
+# TOKEN=$(jq -r '.accessToken' token.json)
+# RTOKEN=$(jq -r '.refreshToken' token.json)
+TOKEN="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhY2Nlc3NfdXVpZCI6Ijc3OTYwNTdhLWY1YjYtNGM2OS04NTQxLTUxMzg2ZjYyOWVjOCIsImF1dGhvcml6ZWQiOnRydWUsImV4cCI6MTc3Njc1MzkwNCwidXNlcl9pZCI6IkZmaWJjOWxaIn0.ggMLpyIN8cnETbjXIzXzw8SC_ymj9CuI5YFcPxaFmsU"
+RTOKEN="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NzczNTc4MDQsInJlZnJlc2hfdXVpZCI6ImQ1NDY1YjIwLTU0MTYtNDA3NC05YzY2LTE5ZDk3MmNiMWFkZSIsInVzZXJfaWQiOiJGZmliYzlsWiJ9.SiKWzWnF-axuWkkkVgrRtBOw_Edev27o-PM8nnvPif"
+
 
 
 BASE_URL="http://127.0.0.1:9000/v1" 
@@ -76,8 +79,6 @@ auth_token_refresh(){
 
 
 
-
-
 # Example JSON file (data.json): { "name": "John", "age": 30 }
 
 
@@ -89,6 +90,6 @@ auth_token_refresh(){
 
 # auth_with_password "tristar3@gmail.com" "woshwosh"
 # get_articles
-request_otp "tristar3@gmail.com"
-# auth_with_otp "QMSpesgN" "015012"
+request_otp "otp-resend-6M58MoFfibc9lZ"
+# auth_with_otp "Ffibc9lZ" "736635"
 # auth_token_refresh $RTOKEN

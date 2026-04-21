@@ -105,8 +105,8 @@ func (s *AuthService) QueryOtpResendKeyOwner(otpResendKey string) (string, error
 		return "", errors.New("Key Not Found")
 	}
 
-	str, ok := val.(string)
-	if !ok {
+	str, err := val.String()
+	if err != nil {
 		return "", errors.New("Failed to convert to string")
 	}
 

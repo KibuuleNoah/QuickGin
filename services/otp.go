@@ -17,7 +17,7 @@ import (
 const (
 	otpTTL                    = 2 * time.Minute
 	otpMaxAttempts            = 5
-	otpMaxDailyRequests       = 3
+	otpMaxDailyRequests       = 30
 	otpKeyPrefix              = "otp:"
 	otpAttPrefix              = "otp_att:"
 	otpMaxDailyRequestsPrefix = "otp_daily_limit:"
@@ -50,7 +50,7 @@ func (s *OTPService) Generate(ctx context.Context, identifier string) (otp strin
 
 	// Check Max Daily Limit
 	val, ok := s.cache.Get(dailyKey)
-	dailyCount, _ := val.(int) // Cast to int
+	dailyCount, _ := val.Int()
 
 	if ok && dailyCount >= otpMaxDailyRequests {
 		return "", "", "", time.Time{}, errors.New("daily otp limit reached")
@@ -98,13 +98,13 @@ func (s *OTPService) Verify(ctx context.Context, otp string, userId string) (boo
 
 	// Handle Attempt Counter
 	val, ok := s.cache.Get(attKey)
-	attempts, _ := val.(int)
+	attempts, _ := val.Int()
 	attempts++
 
 	// Update attempts in cache with the same TTL as OTP
 	s.cache.Set(attKey, attempts, otpTTL)
 
-	log.Println("****", attempts, otpMaxAttempts)
+	log.Println("**** OTP Verify", attempts, otpMaxAttempts)
 	if attempts > otpMaxAttempts {
 		return false, ErrTooManyAttempts
 	}
@@ -115,8 +115,7 @@ func (s *OTPService) Verify(ctx context.Context, otp string, userId string) (boo
 		return false, ErrOTPNotFound
 	}
 
-	stored, ok := storedVal.(string)
-	if !ok || stored != otp {
+	if stored, err := storedVal.String(); err != nil || stored != otp {
 		return false, ErrInvalidOTP
 	}
 

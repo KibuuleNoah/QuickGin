@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/KibuuleNoah/QuickGin/db"
 	"github.com/KibuuleNoah/QuickGin/models/cache"
 	jwt "github.com/golang-jwt/jwt/v4"
 	uuid "github.com/google/uuid"
@@ -43,7 +44,9 @@ type AuthModel struct {
 }
 
 func NewAuthModel() *AuthModel {
-	return &AuthModel{}
+	return &AuthModel{
+		cache: db.AppCache(),
+	}
 }
 
 // CreateToken ...
@@ -219,8 +222,8 @@ func (m *AuthModel) FetchAuth(authD *AccessDetails) (string, error) {
 		return "", errors.New("Key Not Found")
 	}
 
-	str, ok := val.(string)
-	if !ok {
+	str, err := val.String()
+	if err != nil {
 		return "", errors.New("Failed to convert to string")
 	}
 
