@@ -12,8 +12,8 @@ type Cache interface {
 }
 
 type CacheItem struct {
-	Value      []byte
-	Expiration time.Time
+	Value      []byte    `db:"value"`
+	Expiration time.Time `db:"expires_at"`
 }
 
 // IsExpired checks if the item has passed its TTL

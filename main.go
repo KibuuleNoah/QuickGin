@@ -60,7 +60,7 @@ func main() {
 	r.Use(gzip.Gzip(gzip.DefaultCompression))
 
 	db.InitAppDB()
-	db.InitAppCache()
+	db.InitAppCache(db.PostgresCache)
 
 	controllers.NewWebController(r)
 

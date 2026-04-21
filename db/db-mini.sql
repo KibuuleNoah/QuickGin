@@ -10,6 +10,7 @@ CREATE DATABASE quickt
 
 -- ─── Extensions ───────────────────────────────────────────────
 CREATE EXTENSION IF NOT EXISTS plpgsql WITH SCHEMA pg_catalog;
+CREATE EXTENSION pg_cron;
 
 -- ─── Trigger Functions ────────────────────────────────────────
 CREATE OR REPLACE FUNCTION created_at_column() RETURNS trigger
@@ -83,6 +84,16 @@ CREATE TABLE article (
   created_at  BIGINT
 );
 
+
+CREATE UNLOGGED TABLE cache_items (
+    key         TEXT PRIMARY KEY,
+    value       JSONB NOT NULL,
+    expires_at  TIMESTAMPTZ 
+);
+
+-- Index for faster cleanup of expired records
+CREATE INDEX idx_cache_expiration ON cache_items(expires_at);
+
 -- ─── Triggers ─────────────────────────────────────────────────
 CREATE TRIGGER create_user_created_at
   BEFORE INSERT ON "user"
@@ -99,3 +110,8 @@ CREATE TRIGGER create_article_created_at
 CREATE TRIGGER update_article_updated_at
   BEFORE UPDATE ON article
   FOR EACH ROW EXECUTE PROCEDURE update_at_column();
+
+-- Schedule a job to run every 1 minute
+SELECT cron.schedule('cache-cleanup', '* * * * *', 
+    $$DELETE FROM cache_items WHERE expires_at < NOW()$$);
+

@@ -33,7 +33,6 @@ func InitAppDB() {
 	var err error
 	dbConn, err = sqlx.Connect("postgres", dbinfo)
 
-	// dbConn, err = sqlx.Connect("sqlite", "file:sqlite3.db")
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -44,16 +43,32 @@ func AppDB() *sqlx.DB {
 	return dbConn
 }
 
-func InitAppCache() {
-	appCache = cache.NewMemoryCache()
+type CacheType string
 
+const (
+	RedisCache    CacheType = "redis"
+	MemCache      CacheType = "memory"
+	PostgresCache CacheType = "postgres"
+)
+
+func InitAppCache(cacheType CacheType) {
+
+	switch cacheType {
+	case MemCache:
+		appCache = cache.NewMemoryCache()
+
+	case PostgresCache:
+		appCache = cache.NewPostgresCache(AppDB())
+
+	case RedisCache:
+
+		// appCache = cache.NewRedisCache()
+
+	default:
+		panic("unsupported cache type")
+	}
 }
 
 func AppCache() cache.Cache {
 	return appCache
 }
-
-// // GetRedis returns the Redis client.
-// func GetRedis() *_redis.Client {
-// 	return RedisClient
-// }
