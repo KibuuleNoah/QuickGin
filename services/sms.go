@@ -9,14 +9,14 @@ import (
 	"strings"
 )
 
-// TwilioConfig holds Twilio credentials loaded from environment variables.
+// Twilio credentials loaded from environment variables.
 type TwilioConfig struct {
 	AccountSID string
 	AuthToken  string
-	FromNumber string // E.164, e.g. +12025551234
+	FromNumber string // e.g. +12025551234
 }
 
-// SMSService sends SMS messages via Twilio's REST API.
+// sends SMS messages via Twilio's REST API.
 type SMSService struct {
 	cfg    TwilioConfig
 	client *http.Client
@@ -26,7 +26,6 @@ func NewSMSService(cfg TwilioConfig) *SMSService {
 	return &SMSService{cfg: cfg, client: &http.Client{}}
 }
 
-// SendOTP sends a 6-digit OTP to the given E.164 phone number.
 func (s *SMSService) SendOTP(to, otp string) error {
 	msgBody := fmt.Sprintf("Your verification code is %s. It expires in 5 minutes.", otp)
 

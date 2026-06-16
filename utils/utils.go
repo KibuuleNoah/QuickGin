@@ -13,7 +13,7 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-// generateSecureOTP returns a cryptographically secure 6-digit string.
+// create a cryptographically secure 6-digit string.
 func GenerateSecureOTP() (string, error) {
 	max := big.NewInt(1_000_000)
 	n, err := rand.Int(rand.Reader, max)
@@ -23,7 +23,7 @@ func GenerateSecureOTP() (string, error) {
 	return fmt.Sprintf("%06d", n.Int64()), nil
 }
 
-// DetectType checks if a string is a valid email or mobile number or otp-resend-key (E.164 format)
+// checks if a string is a valid email or mobile number or otp-resend-key
 func DetectIdentifierType(input string) string {
 	input = strings.TrimSpace(input)
 
@@ -31,17 +31,15 @@ func DetectIdentifierType(input string) string {
 		return "otp-resend"
 	}
 
-	// Check for Email using the standard library
+	// Email Check using the standard library
 	if _, err := mail.ParseAddress(input); err == nil {
-		// Standard ParseAddress can accept "Name <email@domain.com>",
-		// so we check if the input contains '@' to be safe for simple strings.
+		// does input contains '@' 
 		if strings.Contains(input, "@") && !strings.Contains(input, " ") {
 			return "email"
 		}
 	}
 
-	// Check for Mobile Number (E.164 format: +1234567890)
-	// This regex matches an optional '+' followed by 10 to 15 digits.
+	// Check for Mobile Number (matches an optional '+' followed by 10 to 15 digits.)
 	mobileRegex := regexp.MustCompile(`^\+?[1-9]\d{9,14}$`)
 	if mobileRegex.MatchString(input) {
 		return "mobile"
