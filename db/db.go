@@ -1,11 +1,12 @@
 package db
 
 import (
+	"QuickGin/config"
+	"QuickGin/models/cache"
 	"fmt"
-	"os"
+	"log"
 
 	"github.com/jmoiron/sqlx"
-	"QuickGin/models/cache"
 
 	_ "github.com/lib/pq"
 )
@@ -15,22 +16,22 @@ var appCache cache.Cache
 
 // Init connects to PostgreSQL using environment variables.
 func InitAppDB() error {
-	sslMode := "disable"
-	if os.Getenv("SSL") == "TRUE" {
-		sslMode = "require"
-	}
-
-	dbinfo := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=%s",
-		os.Getenv("DB_HOST"),
-		os.Getenv("DB_PORT"),
-		os.Getenv("DB_USER"),
-		os.Getenv("DB_PASS"),
-		os.Getenv("DB_NAME"),
-		sslMode,
-	)
-
+	// sslMode := "disable"
+	// if  == "TRUE" {
+	// 	sslMode = "require"
+	// }
+	//
+	// dbinfo := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=%s",
+	// 	os.Getenv("DB_HOST"),
+	// 	os.Getenv("DB_PORT"),
+	// 	os.Getenv("DB_USER"),
+	// 	os.Getenv("DB_PASS"),
+	// 	os.Getenv("DB_NAME"),
+	// 	sslMode,
+	// )
+	log.Println(config.Get().DSN())
 	var err error
-	dbConn, err = sqlx.Connect("postgres", dbinfo)
+	dbConn, err = sqlx.Connect("postgres", config.Get().DSN())
 	return err
 }
 

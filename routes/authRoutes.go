@@ -10,6 +10,7 @@ import (
 func RegisterAuthRoutes(rg *gin.RouterGroup) {
 	auth := controllers.NewAuthController()
 	authRoutes := rg.Group("/auth")
+	authRoutes.Use(middleware.PerRoute(1, 5))
 	{
 		// authRoutes.POST("/with-password", auth.AuthWithPassword)
 		authRoutes.POST("/request-otp", auth.AuthRequestOtp)

@@ -12,6 +12,7 @@ import (
 	"syscall"
 	"time"
 
+	"QuickGin/config"
 	"QuickGin/db"
 	_ "QuickGin/docs"
 	"QuickGin/forms"
@@ -21,26 +22,20 @@ import (
 	"github.com/gin-contrib/gzip"
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
-	"github.com/joho/godotenv"
 	swaggerfiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
 )
 
 func main() {
-	if err := godotenv.Load(); err != nil {
-		log.Println("no .env file found, using system environment variables")
-	}
+	cfg := config.Load()
 
-	env := os.Getenv("ENV")
-	isProd := env == "PRODUCTION"
-
-	if isProd {
+	if cfg.IsProd() {
 		gin.SetMode(gin.ReleaseMode)
 	}
 
 	r := gin.New()
 	r.Use(gin.Recovery())
-	if !isProd {
+	if !cfg.IsProd() {
 		r.Use(gin.Logger())
 	}
 
@@ -49,6 +44,9 @@ func main() {
 	}
 
 	binding.Validator = new(forms.DefaultValidator)
+
+	limiter := middleware.NewRateLimiter(float64(cfg.RateLimitRPS), cfg.RateLimitBurst)
+	r.Use(limiter.Middleware())
 
 	r.Use(middleware.CORS())
 	r.Use(middleware.RequestID())
@@ -69,7 +67,7 @@ func main() {
 		c.JSON(http.StatusOK, gin.H{"status": "ok"})
 	})
 
-	if !isProd {
+	if !cfg.IsProd() {
 		r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerfiles.Handler))
 	}
 
@@ -81,10 +79,10 @@ func main() {
 		log.Fatalf("invalid PORT value: %q", port)
 	}
 
-	log.Printf("\n\n PORT: %s \n ENV: %s \n SSL: %s \n Version: %s \n\n", port, env, os.Getenv("SSL"), os.Getenv("API_VERSION"))
+	log.Printf("\n\n PORT: %s \n ENV: %s \n SSL: %s \n Version: %s \n\n", port, cfg.Env, cfg.DBSSLMode, os.Getenv("API_VERSION"))
 
 	srv := &http.Server{
-		Addr:              "0.0.0.0:" + port,
+		Addr:              "0.0.0.0:" + cfg.Port,
 		Handler:           r,
 		ReadHeaderTimeout: 10 * time.Second,
 		ReadTimeout:       15 * time.Second,
