@@ -8,7 +8,7 @@ import (
 	"unicode"
 	"unicode/utf8"
 
-	"github.com/KibuuleNoah/QuickGin/utils"
+	"pajo/utils"
 	"github.com/gin-gonic/gin/binding"
 	"github.com/go-playground/validator/v10"
 )
@@ -96,7 +96,7 @@ const (
 	minSpecial   = 1
 )
 
-// passwordStrength holds per-character-class counts after a single scan.
+// holds per-character-class counts after a single scan.
 type passwordStrength struct {
 	length       int
 	uppercase    int
@@ -106,7 +106,7 @@ type passwordStrength struct {
 	hasAmbiguous bool // optional: flag visually-ambiguous chars (0/O, 1/l/I)
 }
 
-// analyzePassword performs a single O(n) scan of the password rune slice.
+// performs a single O(n) scan of the password rune slice.
 func analyzePassword(password string) passwordStrength {
 	var s passwordStrength
 	for _, r := range password {
@@ -128,7 +128,7 @@ func analyzePassword(password string) passwordStrength {
 	return s
 }
 
-// isSpecialChar returns true for printable, non-alphanumeric ASCII characters
+// returns true for printable, non-alphanumeric ASCII characters
 // plus common Unicode punctuation/symbols.
 func isSpecialChar(r rune) bool {
 	if r > unicode.MaxASCII {
@@ -138,7 +138,7 @@ func isSpecialChar(r rune) bool {
 	return r >= '!' && r <= '~' && !unicode.IsLetter(r) && !unicode.IsDigit(r)
 }
 
-// hasSequentialChars detects runs of 3+ sequential characters (e.g. "abc", "123").
+// detects runs of 3+ sequential characters (e.g. "abc", "123").
 func hasSequentialChars(password string) bool {
 	runes := []rune(password)
 	if len(runes) < 3 {
@@ -157,7 +157,7 @@ func hasSequentialChars(password string) bool {
 	return false
 }
 
-// hasRepeatingChars detects 3+ consecutive identical characters (e.g. "aaa").
+// detects 3+ consecutive identical characters (e.g. "aaa").
 func hasRepeatingChars(password string) bool {
 	runes := []rune(password)
 	count := 1

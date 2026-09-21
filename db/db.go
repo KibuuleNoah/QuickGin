@@ -2,11 +2,10 @@ package db
 
 import (
 	"fmt"
-	"log"
 	"os"
 
-	"github.com/KibuuleNoah/QuickGin/models/cache"
 	"github.com/jmoiron/sqlx"
+	"pajo/models/cache"
 
 	_ "github.com/lib/pq"
 )
@@ -15,7 +14,7 @@ var dbConn *sqlx.DB
 var appCache cache.Cache
 
 // Init connects to PostgreSQL using environment variables.
-func InitAppDB() {
+func InitAppDB() error {
 	sslMode := "disable"
 	if os.Getenv("SSL") == "TRUE" {
 		sslMode = "require"
@@ -32,10 +31,7 @@ func InitAppDB() {
 
 	var err error
 	dbConn, err = sqlx.Connect("postgres", dbinfo)
-
-	if err != nil {
-		log.Fatalln(err)
-	}
+	return err
 }
 
 // AppDB returns the sqlx database connection.
@@ -51,7 +47,7 @@ const (
 	PostgresCache CacheType = "postgres"
 )
 
-func InitAppCache(cacheType CacheType) {
+func InitAppCache(cacheType CacheType) error {
 
 	switch cacheType {
 	case MemCache:
@@ -65,8 +61,9 @@ func InitAppCache(cacheType CacheType) {
 		// appCache = cache.NewRedisCache()
 
 	default:
-		panic("unsupported cache type")
+		return fmt.Errorf("unsupported cache type")
 	}
+	return nil
 }
 
 func AppCache() cache.Cache {

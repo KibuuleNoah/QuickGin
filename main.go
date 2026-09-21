@@ -1,14 +1,24 @@
 package main
 
 import (
+	"context"
+	"errors"
+	"fmt"
 	"log"
+	"net/http"
 	"os"
+	"os/signal"
+	"strconv"
+	"syscall"
+	"time"
 
-	"github.com/KibuuleNoah/QuickGin/controllers"
-	"github.com/KibuuleNoah/QuickGin/db"
-	_ "github.com/KibuuleNoah/QuickGin/docs"
-	"github.com/KibuuleNoah/QuickGin/forms"
-	"github.com/KibuuleNoah/QuickGin/middleware"
+	"pajo/controllers"
+	"pajo/db"
+	_ "pajo/docs"
+	"pajo/forms"
+	"pajo/middleware"
+	"pajo/routes"
+
 	"github.com/gin-contrib/gzip"
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
@@ -17,114 +27,94 @@ import (
 	ginSwagger "github.com/swaggo/gin-swagger"
 )
 
-// @title           QuickGin Boilerplate
-// @version         3.0
-// @description     A RESTful API boilerplate with Gin Framework, PostgreSQL, Redis and JWT authentication
-// @termsOfService  http://swagger.io/terms/
-
-// @contact.name   API Support
-// @contact.url    http://www.swagger.io/support
-// @contact.email  support@swagger.io
-
-// @license.name  MIT License
-// @license.url   https://github.com/KibuuleNoah/QuickGin/blob/master/LICENSE
-
-// @host      localhost:9000
-// @BasePath  /v1
-
-// @securityDefinitions.apikey BearerAuth
-// @in header
-// @name Authorization
-
-// @externalDocs.description  OpenAPI
-// @externalDocs.url          https://swagger.io/resources/open-api/
 func main() {
-	err := godotenv.Load(".env")
-	if err != nil {
-		log.Fatal("error: failed to load the env file")
+	if err := godotenv.Load(); err != nil {
+		log.Println("no .env file found, using system environment variables")
 	}
 
-	if os.Getenv("ENV") == "PRODUCTION" {
+	env := os.Getenv("ENV")
+	isProd := env == "PRODUCTION"
+
+	if isProd {
 		gin.SetMode(gin.ReleaseMode)
 	}
 
-	r := gin.Default()
-	r.SetTrustedProxies(nil)
+	r := gin.New()
+	r.Use(gin.Recovery())
+	if !isProd {
+		r.Use(gin.Logger())
+	}
+
+	if err := r.SetTrustedProxies(nil); err != nil {
+		log.Fatalf("failed to set trusted proxies: %v", err)
+	}
 
 	binding.Validator = new(forms.DefaultValidator)
 
 	r.Use(middleware.CORS())
 	r.Use(middleware.RequestID())
-
-	// r.Use(gin.Logger()) //****** Log first
 	r.Use(gzip.Gzip(gzip.DefaultCompression))
 
-	db.InitAppDB()
-	db.InitAppCache(db.PostgresCache)
-
-	controllers.NewWebController(r)
-
-	v1 := r.Group("/v1")
-	{
-		/*** START USER ***/
-		user := new(controllers.UserController)
-		userRoutes := v1.Group("/user")
-
-		userRoutes.POST("/", user.CreateUser)
-
-		/*** START AUTH ***/
-		auth := controllers.NewAuthController()
-		authRoutes := v1.Group("/auth")
-
-		authRoutes.POST("/with-password", auth.AuthWithPassword)
-		authRoutes.POST("/request-otp", auth.AuthRequestOtp)
-		authRoutes.POST("/with-otp", auth.AuthWithOTP)
-		authRoutes.POST("/token/refresh", auth.RefreshToken)
-		authRoutes.POST("/logout", middleware.TokenAuth(), auth.AuthLogout)
-
-		/*** START Article ***/
-		article := new(controllers.ArticleController)
-
-		v1.POST("/article", middleware.TokenAuth(), article.Create)
-		v1.GET("/articles", middleware.TokenAuth(), article.All)
-		v1.GET("/article/:id", middleware.TokenAuth(), article.One)
-		v1.PUT("/article/:id", middleware.TokenAuth(), article.Update)
-		v1.DELETE("/article/:id", middleware.TokenAuth(), article.Delete)
-
+	if err := db.InitAppDB(); err != nil {
+		log.Fatalf("failed to init db: %v", err)
+	}
+	if err := db.InitAppCache(db.PostgresCache); err != nil {
+		log.Fatalf("failed to init cache: %v", err)
 	}
 
-	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerfiles.Handler))
+	controllers.NewWebController(r)
+	apiV1 := r.Group("/api/v1")
+	routes.RegisterRoutes(apiV1)
 
-	// r.LoadHTMLGlob("./public/html/*")
-	//
-	// r.Static("/public", "./public")
-	//
-	// r.GET("/", func(c *gin.Context) {
-	// 	c.HTML(http.StatusOK, "index.html", gin.H{
-	// 		"ginBoilerplateVersion": "v3.0",
-	// 		"goVersion":             runtime.Version(),
-	// 	})
-	// })
-	//
-	// r.NoRoute(func(c *gin.Context) {
-	// 	c.HTML(404, "404.html", gin.H{})
-	// })
+	r.GET("/healthz", func(c *gin.Context) {
+		c.JSON(http.StatusOK, gin.H{"status": "ok"})
+	})
+
+	if !isProd {
+		r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerfiles.Handler))
+	}
 
 	port := os.Getenv("PORT")
+	if port == "" {
+		port = "3002"
+	}
+	if _, err := strconv.Atoi(port); err != nil {
+		log.Fatalf("invalid PORT value: %q", port)
+	}
 
-	log.Printf("\n\n PORT: %s \n ENV: %s \n SSL: %s \n Version: %s \n\n", port, os.Getenv("ENV"), os.Getenv("SSL"), os.Getenv("API_VERSION"))
+	log.Printf("\n\n PORT: %s \n ENV: %s \n SSL: %s \n Version: %s \n\n", port, env, os.Getenv("SSL"), os.Getenv("API_VERSION"))
 
-	// if os.Getenv("SSL") == "TRUE" {
-	// 	SSLKeys := &struct {
-	// 		CERT string
-	// 		KEY  string
-	// 	}{
-	// 		CERT: "./cert/myCA.cer",
-	// 		KEY:  "./cert/myCA.key",
-	// 	}
-	//
-	// 	r.RunTLS(":"+port, SSLKeys.CERT, SSLKeys.KEY)
-	// } else {
-	r.Run(":" + port)
-	// }
+	srv := &http.Server{
+		Addr:              "0.0.0.0:" + port,
+		Handler:           r,
+		ReadHeaderTimeout: 10 * time.Second,
+		ReadTimeout:       15 * time.Second,
+		WriteTimeout:      30 * time.Second,
+		IdleTimeout:       60 * time.Second,
+	}
+
+	go func() {
+		if err := srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+			log.Fatalf("server failed: %v", err)
+		}
+	}()
+
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+	<-quit
+
+	log.Println("shutting down server...")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	if err := srv.Shutdown(ctx); err != nil {
+		log.Fatalf("server forced to shutdown: %v", err)
+	}
+
+	if err := db.AppDB().Close(); err != nil {
+		log.Printf("error closing db: %v", err)
+	}
+
+	fmt.Println("server exited")
 }

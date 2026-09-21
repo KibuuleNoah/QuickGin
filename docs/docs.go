@@ -9,16 +9,7 @@ const docTemplate = `{
     "info": {
         "description": "{{escape .Description}}",
         "title": "{{.Title}}",
-        "termsOfService": "http://swagger.io/terms/",
-        "contact": {
-            "name": "API Support",
-            "url": "http://www.swagger.io/support",
-            "email": "support@swagger.io"
-        },
-        "license": {
-            "name": "MIT License",
-            "url": "https://github.com/KibuuleNoah/QuickGin/blob/master/LICENSE"
-        },
+        "contact": {},
         "version": "{{.Version}}"
     },
     "host": "{{.Host}}",
@@ -210,13 +201,66 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/models.MessageResponse"
+                            "$ref": "#/definitions/utils.SuccessResponse"
                         }
                     },
                     "406": {
                         "description": "Not Acceptable",
                         "schema": {
-                            "$ref": "#/definitions/models.MessageResponse"
+                            "$ref": "#/definitions/utils.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/request-otp": {
+            "post": {
+                "description": "Generates and sends a One-Time Password (OTP) to the user's email or phone number.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Request an OTP",
+                "parameters": [
+                    {
+                        "description": "User identifier (email or phone)",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/forms.RequestOTPForm"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OTP and OTPID generated successfully",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid identifier or request body",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error generating OTP",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
                         }
                     }
                 }
@@ -238,11 +282,11 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "description": "Auth",
-                        "name": "auth",
+                        "name": "body",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/forms.Token"
+                            "$ref": "#/definitions/forms.RefreshTokenForm"
                         }
                     }
                 ],
@@ -250,13 +294,331 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/models.AuthResponse"
+                            "$ref": "#/definitions/utils.SuccessResponse"
                         }
                     },
                     "406": {
                         "description": "Not Acceptable",
                         "schema": {
-                            "$ref": "#/definitions/models.MessageResponse"
+                            "$ref": "#/definitions/utils.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/with-otp": {
+            "post": {
+                "description": "Validates the OTP. On success, creates the user if they don't exist and returns a JWT access token + refresh token (PocketBase-style).",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Verify OTP and authenticate",
+                "parameters": [
+                    {
+                        "description": "OTP verification details",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/forms.AuthWithOTPForm"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully logged in with user and token data",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "406": {
+                        "description": "Invalid login details or validation error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/with-password": {
+            "post": {
+                "description": "Logs in a user using their identifier and password, returning a JWT access token and refresh token.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Authenticate with password",
+                "parameters": [
+                    {
+                        "description": "Login credentials",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/forms.AuthWithPasswordForm"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully logged in with user and token data",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "406": {
+                        "description": "Invalid login details or validation error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/txns": {
+            "post": {
+                "description": "Initializes an escrow contract context between a buyer and a seller.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "transactions"
+                ],
+                "summary": "Create a new transaction",
+                "parameters": [
+                    {
+                        "description": "Transaction initialization details",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/forms.CreateTransactionRequestForm"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Transaction created successfully",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "406": {
+                        "description": "Validation error or invalid form data",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to create transaction record",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/txns/dispute": {
+            "post": {
+                "description": "Triggers an arbitration lock on a funded contract to freeze transaction assets until resolution.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "transactions"
+                ],
+                "summary": "Open a dispute on a transaction",
+                "parameters": [
+                    {
+                        "description": "Arbitration dispute lock details",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/forms.DisputeTransactionRequestForm"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Dispute opened; funds held pending resolution",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "404": {
+                        "description": "Transaction record not found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "406": {
+                        "description": "Validation failure, state invalid, or participant unauthorized",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to initiate arbitration processing lock",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/txns/fund": {
+            "post": {
+                "description": "Settles an open transaction by depositing the verified contract value balance into escrow.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "transactions"
+                ],
+                "summary": "Deposit funds into escrow",
+                "parameters": [
+                    {
+                        "description": "Funding allocation details",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/forms.FundTransactionRequestForm"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Funds deposited into escrow successfully",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "404": {
+                        "description": "Transaction record not found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "406": {
+                        "description": "Validation failure, status invalid, or amount mismatch",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/txns/release": {
+            "post": {
+                "description": "Authorizes the final structural payout transformation to release frozen assets directly to the seller.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "transactions"
+                ],
+                "summary": "Release escrow funds to seller",
+                "parameters": [
+                    {
+                        "description": "Payout release authorization details",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/forms.ReleaseTransactionRequestForm"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Funds released to seller successfully",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "404": {
+                        "description": "Transaction record not found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "406": {
+                        "description": "Validation failure, state invalid, or role unauthorized",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to update payout allocation state",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
                         }
                     }
                 }
@@ -272,6 +634,38 @@ const docTemplate = `{
                 },
                 "message": {
                     "type": "string"
+                }
+            }
+        },
+        "forms.AuthWithOTPForm": {
+            "type": "object",
+            "required": [
+                "otp",
+                "userId"
+            ],
+            "properties": {
+                "otp": {
+                    "type": "string"
+                },
+                "userId": {
+                    "type": "string"
+                }
+            }
+        },
+        "forms.AuthWithPasswordForm": {
+            "type": "object",
+            "required": [
+                "identifier",
+                "password"
+            ],
+            "properties": {
+                "identifier": {
+                    "type": "string"
+                },
+                "password": {
+                    "type": "string",
+                    "maxLength": 32,
+                    "minLength": 8
                 }
             }
         },
@@ -294,13 +688,107 @@ const docTemplate = `{
                 }
             }
         },
-        "forms.Token": {
+        "forms.CreateTransactionRequestForm": {
             "type": "object",
             "required": [
-                "refresh_token"
+                "amount",
+                "buyer_id",
+                "currency",
+                "seller_id",
+                "terms"
             ],
             "properties": {
-                "refresh_token": {
+                "amount": {
+                    "type": "number"
+                },
+                "buyer_id": {
+                    "type": "string"
+                },
+                "currency": {
+                    "type": "string"
+                },
+                "seller_id": {
+                    "type": "string"
+                },
+                "terms": {
+                    "type": "string"
+                }
+            }
+        },
+        "forms.DisputeTransactionRequestForm": {
+            "type": "object",
+            "required": [
+                "raised_by",
+                "reason",
+                "transaction_id"
+            ],
+            "properties": {
+                "raised_by": {
+                    "type": "string"
+                },
+                "reason": {
+                    "type": "string"
+                },
+                "transaction_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "forms.FundTransactionRequestForm": {
+            "type": "object",
+            "required": [
+                "amount",
+                "payment_reference",
+                "transaction_id"
+            ],
+            "properties": {
+                "amount": {
+                    "type": "number"
+                },
+                "payment_reference": {
+                    "type": "string"
+                },
+                "transaction_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "forms.RefreshTokenForm": {
+            "type": "object",
+            "required": [
+                "token"
+            ],
+            "properties": {
+                "token": {
+                    "type": "string"
+                }
+            }
+        },
+        "forms.ReleaseTransactionRequestForm": {
+            "type": "object",
+            "required": [
+                "released_by",
+                "transaction_id"
+            ],
+            "properties": {
+                "note": {
+                    "type": "string"
+                },
+                "released_by": {
+                    "type": "string"
+                },
+                "transaction_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "forms.RequestOTPForm": {
+            "type": "object",
+            "required": [
+                "identifier"
+            ],
+            "properties": {
+                "identifier": {
                     "type": "string"
                 }
             }
@@ -322,7 +810,7 @@ const docTemplate = `{
                 "content": {
                     "type": "string"
                 },
-                "created_at": {
+                "createdAt": {
                     "type": "integer"
                 },
                 "id": {
@@ -331,30 +819,11 @@ const docTemplate = `{
                 "title": {
                     "type": "string"
                 },
-                "updated_at": {
+                "updatedAt": {
                     "type": "integer"
                 },
                 "user": {
                     "$ref": "#/definitions/models.UserResponse"
-                }
-            }
-        },
-        "models.AuthResponse": {
-            "type": "object",
-            "properties": {
-                "access_token": {
-                    "type": "string"
-                },
-                "refresh_token": {
-                    "type": "string"
-                }
-            }
-        },
-        "models.MessageResponse": {
-            "type": "object",
-            "properties": {
-                "message": {
-                    "type": "string"
                 }
             }
         },
@@ -401,29 +870,38 @@ const docTemplate = `{
                     "type": "string"
                 }
             }
+        },
+        "utils.ErrorResponse": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "string"
+                },
+                "message": {
+                    "type": "string"
+                }
+            }
+        },
+        "utils.SuccessResponse": {
+            "type": "object",
+            "properties": {
+                "data": {},
+                "message": {
+                    "type": "string"
+                }
+            }
         }
-    },
-    "securityDefinitions": {
-        "BearerAuth": {
-            "type": "apiKey",
-            "name": "Authorization",
-            "in": "header"
-        }
-    },
-    "externalDocs": {
-        "description": "OpenAPI",
-        "url": "https://swagger.io/resources/open-api/"
     }
 }`
 
 // SwaggerInfo holds exported Swagger Info so clients can modify it
 var SwaggerInfo = &swag.Spec{
-	Version:          "3.0",
-	Host:             "localhost:9000",
-	BasePath:         "/v1",
+	Version:          "",
+	Host:             "",
+	BasePath:         "",
 	Schemes:          []string{},
-	Title:            "Golang Gin Boilerplate",
-	Description:      "A RESTful API boilerplate with Gin Framework, PostgreSQL, Redis and JWT authentication",
+	Title:            "",
+	Description:      "",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,
 	LeftDelim:        "{{",

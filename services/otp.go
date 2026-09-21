@@ -7,10 +7,10 @@ import (
 	"log"
 	"time"
 
-	"github.com/KibuuleNoah/QuickGin/db"
-	"github.com/KibuuleNoah/QuickGin/models"
-	"github.com/KibuuleNoah/QuickGin/models/cache"
-	"github.com/KibuuleNoah/QuickGin/utils"
+	"pajo/db"
+	"pajo/models"
+	"pajo/models/cache"
+	"pajo/utils"
 	"github.com/jmoiron/sqlx"
 )
 
@@ -23,7 +23,6 @@ const (
 	otpMaxDailyRequestsPrefix = "otp_daily_limit:"
 )
 
-// Handles generation, storage, and verification of OTPs via Redis.
 type OTPService struct {
 	cache cache.Cache
 	DB    *sqlx.DB
@@ -37,6 +36,7 @@ func NewOTPService() *OTPService {
 }
 
 // Generate creates a 6-digit OTP, stores it in Redis, and returns it.
+// The key is "otp:<identifier>" where identifier is an e-mail or E.164 phone number.
 func (s *OTPService) Generate(ctx context.Context, identifier string) (otp string, otpResendKey string, userId string, expiry time.Time, err error) {
 	var user models.User
 	err = s.DB.Get(&user, "SELECT id, identifier, password, name, updated_at, created_at FROM public.user WHERE identifier=LOWER($1) LIMIT 1", identifier)
@@ -84,7 +84,6 @@ func (s *OTPService) Generate(ctx context.Context, identifier string) (otp strin
 	// Update Daily Counter
 	s.cache.Set(dailyKey, dailyCount+1, 24*time.Hour)
 
-	// "otp:<identifier>" where identifier is an e-mail or E.164 phone number.
 	return otp, otpResendKey, user.ID, expiry, nil
 }
 
