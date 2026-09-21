@@ -4,8 +4,8 @@ import (
 	"errors"
 	"net/http"
 
-	"pajo/forms"
-	"pajo/services"
+	"QuickGin/forms"
+	"QuickGin/services"
 
 	"github.com/gin-gonic/gin"
 )

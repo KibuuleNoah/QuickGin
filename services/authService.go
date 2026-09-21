@@ -11,12 +11,12 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"pajo/db"
-	"pajo/forms"
+	"QuickGin/db"
+	"QuickGin/forms"
 
 	"github.com/jmoiron/sqlx"
-	"pajo/models"
-	"pajo/models/cache"
+	"QuickGin/models"
+	"QuickGin/models/cache"
 
 	jwt "github.com/golang-jwt/jwt/v4"
 )

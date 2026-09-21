@@ -1,7 +1,7 @@
 package controllers
 
 import (
-	"pajo/services"
+	"QuickGin/services"
 )
 
 type AdminController struct {

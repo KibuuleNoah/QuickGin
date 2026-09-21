@@ -1,11 +1,4 @@
 definitions:
-  forms.ArticleResponse:
-    properties:
-      id:
-        type: integer
-      message:
-        type: string
-    type: object
   forms.AuthWithOTPForm:
     properties:
       otp:
@@ -16,76 +9,21 @@ definitions:
     - otp
     - userId
     type: object
-  forms.AuthWithPasswordForm:
-    properties:
-      identifier:
-        type: string
-      password:
-        maxLength: 32
-        minLength: 8
-        type: string
-    required:
-    - identifier
-    - password
-    type: object
   forms.CreateArticleForm:
     properties:
-      content:
-        maxLength: 1000
-        minLength: 3
+      author_id:
+        type: string
+      body:
+        minLength: 10
         type: string
       title:
-        maxLength: 100
+        maxLength: 200
         minLength: 3
         type: string
     required:
-    - content
+    - author_id
+    - body
     - title
-    type: object
-  forms.CreateTransactionRequestForm:
-    properties:
-      amount:
-        type: number
-      buyer_id:
-        type: string
-      currency:
-        type: string
-      seller_id:
-        type: string
-      terms:
-        type: string
-    required:
-    - amount
-    - buyer_id
-    - currency
-    - seller_id
-    - terms
-    type: object
-  forms.DisputeTransactionRequestForm:
-    properties:
-      raised_by:
-        type: string
-      reason:
-        type: string
-      transaction_id:
-        type: string
-    required:
-    - raised_by
-    - reason
-    - transaction_id
-    type: object
-  forms.FundTransactionRequestForm:
-    properties:
-      amount:
-        type: number
-      payment_reference:
-        type: string
-      transaction_id:
-        type: string
-    required:
-    - amount
-    - payment_reference
-    - transaction_id
     type: object
   forms.RefreshTokenForm:
     properties:
@@ -94,18 +32,6 @@ definitions:
     required:
     - token
     type: object
-  forms.ReleaseTransactionRequestForm:
-    properties:
-      note:
-        type: string
-      released_by:
-        type: string
-      transaction_id:
-        type: string
-    required:
-    - released_by
-    - transaction_id
-    type: object
   forms.RequestOTPForm:
     properties:
       identifier:
@@ -113,54 +39,16 @@ definitions:
     required:
     - identifier
     type: object
-  models.AllArticleResponse:
+  forms.UpdateArticleForm:
     properties:
-      results:
-        items:
-          $ref: '#/definitions/models.Result'
-        type: array
-    type: object
-  models.ArticleResponse:
-    properties:
-      content:
+      body:
+        minLength: 10
         type: string
-      createdAt:
-        type: integer
-      id:
-        type: integer
+      published:
+        type: boolean
       title:
-        type: string
-      updatedAt:
-        type: integer
-      user:
-        $ref: '#/definitions/models.UserResponse'
-    type: object
-  models.Meta:
-    properties:
-      total:
-        type: integer
-    type: object
-  models.OneArticleResponse:
-    properties:
-      data:
-        $ref: '#/definitions/models.ArticleResponse'
-    type: object
-  models.Result:
-    properties:
-      data:
-        items:
-          $ref: '#/definitions/models.ArticleResponse'
-        type: array
-      meta:
-        $ref: '#/definitions/models.Meta'
-    type: object
-  models.UserResponse:
-    properties:
-      email:
-        type: string
-      id:
-        type: integer
-      name:
+        maxLength: 200
+        minLength: 3
         type: string
     type: object
   utils.ErrorResponse:
@@ -179,117 +67,155 @@ definitions:
 info:
   contact: {}
 paths:
-  /article:
+  /articles:
+    get:
+      parameters:
+      - description: Max results (default 20, max 50)
+        in: query
+        name: limit
+        type: integer
+      - description: Pagination offset (default 0)
+        in: query
+        name: offset
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: List published articles
+      tags:
+      - articles
     post:
       consumes:
       - application/json
-      description: Create Article example
       parameters:
-      - description: Article
+      - description: Article details
         in: body
-        name: article
+        name: body
         required: true
         schema:
           $ref: '#/definitions/forms.CreateArticleForm'
       produces:
       - application/json
       responses:
-        "200":
-          description: OK
+        "201":
+          description: Created
           schema:
-            $ref: '#/definitions/forms.ArticleResponse'
+            additionalProperties: true
+            type: object
         "406":
           description: Not Acceptable
           schema:
-            $ref: '#/definitions/forms.ArticleResponse'
-      summary: Create Article example
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Create an article
       tags:
-      - Article
-  /article/{id}:
+      - articles
+  /articles/{id}:
     delete:
-      consumes:
-      - application/json
-      description: Delete Article example
+      parameters:
+      - description: Article ID
+        in: path
+        name: id
+        required: true
+        type: string
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/models.OneArticleResponse'
+            additionalProperties:
+              type: string
+            type: object
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/forms.ArticleResponse'
-        "406":
-          description: Not Acceptable
-          schema:
-            $ref: '#/definitions/forms.ArticleResponse'
-      summary: Delete Article example
+            additionalProperties:
+              type: string
+            type: object
+      summary: Delete an article
       tags:
-      - Article
+      - articles
     get:
-      consumes:
-      - application/json
-      description: One All Article example
+      parameters:
+      - description: Article ID
+        in: path
+        name: id
+        required: true
+        type: string
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/models.OneArticleResponse'
-        "406":
-          description: Not Acceptable
+            additionalProperties: true
+            type: object
+        "404":
+          description: Not Found
           schema:
-            $ref: '#/definitions/forms.ArticleResponse'
-      summary: Get One Article example
+            additionalProperties:
+              type: string
+            type: object
+      summary: Get a single article
       tags:
-      - Article
+      - articles
     put:
       consumes:
       - application/json
-      description: Update Article example
       parameters:
-      - description: Article
+      - description: Article ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Fields to update
         in: body
-        name: article
+        name: body
         required: true
         schema:
-          $ref: '#/definitions/forms.CreateArticleForm'
+          $ref: '#/definitions/forms.UpdateArticleForm'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/models.ArticleResponse'
+            additionalProperties: true
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
         "406":
           description: Not Acceptable
           schema:
-            $ref: '#/definitions/forms.ArticleResponse'
-      summary: Update Article example
+            additionalProperties:
+              type: string
+            type: object
+      summary: Update an article
       tags:
-      - Article
-  /articles:
-    get:
-      consumes:
-      - application/json
-      description: Get All Articles example
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/models.AllArticleResponse'
-        "406":
-          description: Not Acceptable
-          schema:
-            $ref: '#/definitions/forms.ArticleResponse'
-      summary: Get All Articles example
-      tags:
-      - Article
+      - articles
   /auth/logout:
     get:
       consumes:
@@ -401,189 +327,4 @@ paths:
       summary: Verify OTP and authenticate
       tags:
       - auth
-  /auth/with-password:
-    post:
-      consumes:
-      - application/json
-      description: Logs in a user using their identifier and password, returning a
-        JWT access token and refresh token.
-      parameters:
-      - description: Login credentials
-        in: body
-        name: body
-        required: true
-        schema:
-          $ref: '#/definitions/forms.AuthWithPasswordForm'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Successfully logged in with user and token data
-          schema:
-            additionalProperties: true
-            type: object
-        "406":
-          description: Invalid login details or validation error
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-      summary: Authenticate with password
-      tags:
-      - auth
-  /txns:
-    post:
-      consumes:
-      - application/json
-      description: Initializes an escrow contract context between a buyer and a seller.
-      parameters:
-      - description: Transaction initialization details
-        in: body
-        name: body
-        required: true
-        schema:
-          $ref: '#/definitions/forms.CreateTransactionRequestForm'
-      produces:
-      - application/json
-      responses:
-        "201":
-          description: Transaction created successfully
-          schema:
-            additionalProperties: true
-            type: object
-        "406":
-          description: Validation error or invalid form data
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-        "500":
-          description: Failed to create transaction record
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-      summary: Create a new transaction
-      tags:
-      - transactions
-  /txns/dispute:
-    post:
-      consumes:
-      - application/json
-      description: Triggers an arbitration lock on a funded contract to freeze transaction
-        assets until resolution.
-      parameters:
-      - description: Arbitration dispute lock details
-        in: body
-        name: body
-        required: true
-        schema:
-          $ref: '#/definitions/forms.DisputeTransactionRequestForm'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Dispute opened; funds held pending resolution
-          schema:
-            additionalProperties: true
-            type: object
-        "404":
-          description: Transaction record not found
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-        "406":
-          description: Validation failure, state invalid, or participant unauthorized
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-        "500":
-          description: Failed to initiate arbitration processing lock
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-      summary: Open a dispute on a transaction
-      tags:
-      - transactions
-  /txns/fund:
-    post:
-      consumes:
-      - application/json
-      description: Settles an open transaction by depositing the verified contract
-        value balance into escrow.
-      parameters:
-      - description: Funding allocation details
-        in: body
-        name: body
-        required: true
-        schema:
-          $ref: '#/definitions/forms.FundTransactionRequestForm'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Funds deposited into escrow successfully
-          schema:
-            additionalProperties: true
-            type: object
-        "404":
-          description: Transaction record not found
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-        "406":
-          description: Validation failure, status invalid, or amount mismatch
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-      summary: Deposit funds into escrow
-      tags:
-      - transactions
-  /txns/release:
-    post:
-      consumes:
-      - application/json
-      description: Authorizes the final structural payout transformation to release
-        frozen assets directly to the seller.
-      parameters:
-      - description: Payout release authorization details
-        in: body
-        name: body
-        required: true
-        schema:
-          $ref: '#/definitions/forms.ReleaseTransactionRequestForm'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Funds released to seller successfully
-          schema:
-            additionalProperties: true
-            type: object
-        "404":
-          description: Transaction record not found
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-        "406":
-          description: Validation failure, state invalid, or role unauthorized
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-        "500":
-          description: Failed to update payout allocation state
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-      summary: Release escrow funds to seller
-      tags:
-      - transactions
 swagger: "2.0"

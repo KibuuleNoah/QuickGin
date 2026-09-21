@@ -5,7 +5,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"pajo/services"
+	"QuickGin/services"
 )
 
 // TokenAuth validates the JWT access token and sets userID in the context.

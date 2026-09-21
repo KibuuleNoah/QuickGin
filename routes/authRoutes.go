@@ -1,8 +1,8 @@
 package routes
 
 import (
-	"pajo/controllers"
-	"pajo/middleware"
+	"QuickGin/controllers"
+	"QuickGin/middleware"
 
 	"github.com/gin-gonic/gin"
 )

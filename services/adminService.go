@@ -1,9 +1,9 @@
 package services
 
 import (
-	"pajo/db"
+	"QuickGin/db"
 
-	"pajo/models/cache"
+	"QuickGin/models/cache"
 
 	"github.com/jmoiron/sqlx"
 )

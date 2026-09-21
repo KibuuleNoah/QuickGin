@@ -7,8 +7,8 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	"pajo/forms"
-	"pajo/services"
+	"QuickGin/forms"
+	"QuickGin/services"
 )
 
 type AuthControllerConfig struct {

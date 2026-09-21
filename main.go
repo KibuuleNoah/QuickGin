@@ -12,12 +12,11 @@ import (
 	"syscall"
 	"time"
 
-	"pajo/controllers"
-	"pajo/db"
-	_ "pajo/docs"
-	"pajo/forms"
-	"pajo/middleware"
-	"pajo/routes"
+	"QuickGin/db"
+	_ "QuickGin/docs"
+	"QuickGin/forms"
+	"QuickGin/middleware"
+	"QuickGin/routes"
 
 	"github.com/gin-contrib/gzip"
 	"github.com/gin-gonic/gin"
@@ -62,7 +61,7 @@ func main() {
 		log.Fatalf("failed to init cache: %v", err)
 	}
 
-	controllers.NewWebController(r)
+	// controllers.NewWebController(r)
 	apiV1 := r.Group("/api/v1")
 	routes.RegisterRoutes(apiV1)
 

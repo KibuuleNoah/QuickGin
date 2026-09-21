@@ -5,7 +5,7 @@ import (
 	"os"
 
 	"github.com/jmoiron/sqlx"
-	"pajo/models/cache"
+	"QuickGin/models/cache"
 
 	_ "github.com/lib/pq"
 )

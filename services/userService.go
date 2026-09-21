@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"log"
 
-	"pajo/db"
-	"pajo/forms"
-	"pajo/models"
+	"QuickGin/db"
+	"QuickGin/forms"
+	"QuickGin/models"
 
 	"github.com/jmoiron/sqlx"
 )

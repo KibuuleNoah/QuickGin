@@ -4,9 +4,49 @@
         "contact": {}
     },
     "paths": {
-        "/article": {
+        "/articles": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "articles"
+                ],
+                "summary": "List published articles",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Max results (default 20, max 50)",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Pagination offset (default 0)",
+                        "name": "offset",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            },
             "post": {
-                "description": "Create Article example",
                 "consumes": [
                     "application/json"
                 ],
@@ -14,13 +54,13 @@
                     "application/json"
                 ],
                 "tags": [
-                    "Article"
+                    "articles"
                 ],
-                "summary": "Create Article example",
+                "summary": "Create an article",
                 "parameters": [
                     {
-                        "description": "Article",
-                        "name": "article",
+                        "description": "Article details",
+                        "name": "body",
                         "in": "body",
                         "required": true,
                         "schema": {
@@ -29,124 +69,72 @@
                     }
                 ],
                 "responses": {
-                    "200": {
-                        "description": "OK",
+                    "201": {
+                        "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/forms.ArticleResponse"
+                            "type": "object",
+                            "additionalProperties": true
                         }
                     },
                     "406": {
                         "description": "Not Acceptable",
                         "schema": {
-                            "$ref": "#/definitions/forms.ArticleResponse"
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
                         }
                     }
                 }
             }
         },
-        "/article/{id}": {
+        "/articles/{id}": {
             "get": {
-                "description": "One All Article example",
-                "consumes": [
-                    "application/json"
-                ],
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "Article"
+                    "articles"
                 ],
-                "summary": "Get One Article example",
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/models.OneArticleResponse"
-                        }
-                    },
-                    "406": {
-                        "description": "Not Acceptable",
-                        "schema": {
-                            "$ref": "#/definitions/forms.ArticleResponse"
-                        }
-                    }
-                }
-            },
-            "put": {
-                "description": "Update Article example",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Article"
-                ],
-                "summary": "Update Article example",
+                "summary": "Get a single article",
                 "parameters": [
                     {
-                        "description": "Article",
-                        "name": "article",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/forms.CreateArticleForm"
-                        }
+                        "type": "string",
+                        "description": "Article ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
                     }
                 ],
                 "responses": {
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/models.ArticleResponse"
-                        }
-                    },
-                    "406": {
-                        "description": "Not Acceptable",
-                        "schema": {
-                            "$ref": "#/definitions/forms.ArticleResponse"
-                        }
-                    }
-                }
-            },
-            "delete": {
-                "description": "Delete Article example",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Article"
-                ],
-                "summary": "Delete Article example",
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/models.OneArticleResponse"
+                            "type": "object",
+                            "additionalProperties": true
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/forms.ArticleResponse"
-                        }
-                    },
-                    "406": {
-                        "description": "Not Acceptable",
-                        "schema": {
-                            "$ref": "#/definitions/forms.ArticleResponse"
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
                         }
                     }
                 }
-            }
-        },
-        "/articles": {
-            "get": {
-                "description": "Get All Articles example",
+            },
+            "put": {
                 "consumes": [
                     "application/json"
                 ],
@@ -154,20 +142,89 @@
                     "application/json"
                 ],
                 "tags": [
-                    "Article"
+                    "articles"
                 ],
-                "summary": "Get All Articles example",
+                "summary": "Update an article",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Article ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Fields to update",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/forms.UpdateArticleForm"
+                        }
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/models.AllArticleResponse"
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
                         }
                     },
                     "406": {
                         "description": "Not Acceptable",
                         "schema": {
-                            "$ref": "#/definitions/forms.ArticleResponse"
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "articles"
+                ],
+                "summary": "Delete an article",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Article ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
                         }
                     }
                 }
@@ -338,294 +395,9 @@
                     }
                 }
             }
-        },
-        "/auth/with-password": {
-            "post": {
-                "description": "Logs in a user using their identifier and password, returning a JWT access token and refresh token.",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "auth"
-                ],
-                "summary": "Authenticate with password",
-                "parameters": [
-                    {
-                        "description": "Login credentials",
-                        "name": "body",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/forms.AuthWithPasswordForm"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Successfully logged in with user and token data",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": true
-                        }
-                    },
-                    "406": {
-                        "description": "Invalid login details or validation error",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "/txns": {
-            "post": {
-                "description": "Initializes an escrow contract context between a buyer and a seller.",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "transactions"
-                ],
-                "summary": "Create a new transaction",
-                "parameters": [
-                    {
-                        "description": "Transaction initialization details",
-                        "name": "body",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/forms.CreateTransactionRequestForm"
-                        }
-                    }
-                ],
-                "responses": {
-                    "201": {
-                        "description": "Transaction created successfully",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": true
-                        }
-                    },
-                    "406": {
-                        "description": "Validation error or invalid form data",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    },
-                    "500": {
-                        "description": "Failed to create transaction record",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "/txns/dispute": {
-            "post": {
-                "description": "Triggers an arbitration lock on a funded contract to freeze transaction assets until resolution.",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "transactions"
-                ],
-                "summary": "Open a dispute on a transaction",
-                "parameters": [
-                    {
-                        "description": "Arbitration dispute lock details",
-                        "name": "body",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/forms.DisputeTransactionRequestForm"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Dispute opened; funds held pending resolution",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": true
-                        }
-                    },
-                    "404": {
-                        "description": "Transaction record not found",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    },
-                    "406": {
-                        "description": "Validation failure, state invalid, or participant unauthorized",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    },
-                    "500": {
-                        "description": "Failed to initiate arbitration processing lock",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "/txns/fund": {
-            "post": {
-                "description": "Settles an open transaction by depositing the verified contract value balance into escrow.",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "transactions"
-                ],
-                "summary": "Deposit funds into escrow",
-                "parameters": [
-                    {
-                        "description": "Funding allocation details",
-                        "name": "body",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/forms.FundTransactionRequestForm"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Funds deposited into escrow successfully",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": true
-                        }
-                    },
-                    "404": {
-                        "description": "Transaction record not found",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    },
-                    "406": {
-                        "description": "Validation failure, status invalid, or amount mismatch",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "/txns/release": {
-            "post": {
-                "description": "Authorizes the final structural payout transformation to release frozen assets directly to the seller.",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "transactions"
-                ],
-                "summary": "Release escrow funds to seller",
-                "parameters": [
-                    {
-                        "description": "Payout release authorization details",
-                        "name": "body",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/forms.ReleaseTransactionRequestForm"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Funds released to seller successfully",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": true
-                        }
-                    },
-                    "404": {
-                        "description": "Transaction record not found",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    },
-                    "406": {
-                        "description": "Validation failure, state invalid, or role unauthorized",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    },
-                    "500": {
-                        "description": "Failed to update payout allocation state",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    }
-                }
-            }
         }
     },
     "definitions": {
-        "forms.ArticleResponse": {
-            "type": "object",
-            "properties": {
-                "id": {
-                    "type": "integer"
-                },
-                "message": {
-                    "type": "string"
-                }
-            }
-        },
         "forms.AuthWithOTPForm": {
             "type": "object",
             "required": [
@@ -641,104 +413,25 @@
                 }
             }
         },
-        "forms.AuthWithPasswordForm": {
-            "type": "object",
-            "required": [
-                "identifier",
-                "password"
-            ],
-            "properties": {
-                "identifier": {
-                    "type": "string"
-                },
-                "password": {
-                    "type": "string",
-                    "maxLength": 32,
-                    "minLength": 8
-                }
-            }
-        },
         "forms.CreateArticleForm": {
             "type": "object",
             "required": [
-                "content",
+                "author_id",
+                "body",
                 "title"
             ],
             "properties": {
-                "content": {
+                "author_id": {
+                    "type": "string"
+                },
+                "body": {
                     "type": "string",
-                    "maxLength": 1000,
-                    "minLength": 3
+                    "minLength": 10
                 },
                 "title": {
                     "type": "string",
-                    "maxLength": 100,
+                    "maxLength": 200,
                     "minLength": 3
-                }
-            }
-        },
-        "forms.CreateTransactionRequestForm": {
-            "type": "object",
-            "required": [
-                "amount",
-                "buyer_id",
-                "currency",
-                "seller_id",
-                "terms"
-            ],
-            "properties": {
-                "amount": {
-                    "type": "number"
-                },
-                "buyer_id": {
-                    "type": "string"
-                },
-                "currency": {
-                    "type": "string"
-                },
-                "seller_id": {
-                    "type": "string"
-                },
-                "terms": {
-                    "type": "string"
-                }
-            }
-        },
-        "forms.DisputeTransactionRequestForm": {
-            "type": "object",
-            "required": [
-                "raised_by",
-                "reason",
-                "transaction_id"
-            ],
-            "properties": {
-                "raised_by": {
-                    "type": "string"
-                },
-                "reason": {
-                    "type": "string"
-                },
-                "transaction_id": {
-                    "type": "string"
-                }
-            }
-        },
-        "forms.FundTransactionRequestForm": {
-            "type": "object",
-            "required": [
-                "amount",
-                "payment_reference",
-                "transaction_id"
-            ],
-            "properties": {
-                "amount": {
-                    "type": "number"
-                },
-                "payment_reference": {
-                    "type": "string"
-                },
-                "transaction_id": {
-                    "type": "string"
                 }
             }
         },
@@ -749,24 +442,6 @@
             ],
             "properties": {
                 "token": {
-                    "type": "string"
-                }
-            }
-        },
-        "forms.ReleaseTransactionRequestForm": {
-            "type": "object",
-            "required": [
-                "released_by",
-                "transaction_id"
-            ],
-            "properties": {
-                "note": {
-                    "type": "string"
-                },
-                "released_by": {
-                    "type": "string"
-                },
-                "transaction_id": {
                     "type": "string"
                 }
             }
@@ -782,81 +457,20 @@
                 }
             }
         },
-        "models.AllArticleResponse": {
+        "forms.UpdateArticleForm": {
             "type": "object",
             "properties": {
-                "results": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/models.Result"
-                    }
-                }
-            }
-        },
-        "models.ArticleResponse": {
-            "type": "object",
-            "properties": {
-                "content": {
-                    "type": "string"
+                "body": {
+                    "type": "string",
+                    "minLength": 10
                 },
-                "createdAt": {
-                    "type": "integer"
-                },
-                "id": {
-                    "type": "integer"
+                "published": {
+                    "type": "boolean"
                 },
                 "title": {
-                    "type": "string"
-                },
-                "updatedAt": {
-                    "type": "integer"
-                },
-                "user": {
-                    "$ref": "#/definitions/models.UserResponse"
-                }
-            }
-        },
-        "models.Meta": {
-            "type": "object",
-            "properties": {
-                "total": {
-                    "type": "integer"
-                }
-            }
-        },
-        "models.OneArticleResponse": {
-            "type": "object",
-            "properties": {
-                "data": {
-                    "$ref": "#/definitions/models.ArticleResponse"
-                }
-            }
-        },
-        "models.Result": {
-            "type": "object",
-            "properties": {
-                "data": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/models.ArticleResponse"
-                    }
-                },
-                "meta": {
-                    "$ref": "#/definitions/models.Meta"
-                }
-            }
-        },
-        "models.UserResponse": {
-            "type": "object",
-            "properties": {
-                "email": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "integer"
-                },
-                "name": {
-                    "type": "string"
+                    "type": "string",
+                    "maxLength": 200,
+                    "minLength": 3
                 }
             }
         },

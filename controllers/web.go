@@ -1,13 +1,13 @@
 package controllers
 
-import (
+/*import (
 	"database/sql"
 	"errors"
 	"fmt"
 	"html/template"
 	"log"
 	"net/http"
-	"pajo/db"
+	"QuickGin/db"
 
 	"github.com/gin-gonic/gin"
 )
@@ -39,12 +39,12 @@ func ShareItem(c *gin.Context) {
 	var meta ShareItemMetaData
 
 	query := `
-		SELECT 
-			i.name, 
-			d.description, 
-			i.thumbnail_url 
+		SELECT
+			i.name,
+			d.description,
+			i.thumbnail_url
 		FROM items i
-		INNER JOIN item_details d ON i.id = d.item_id 
+		INNER JOIN item_details d ON i.id = d.item_id
 		WHERE i.id = $1
 	`
 
@@ -59,7 +59,7 @@ func ShareItem(c *gin.Context) {
 		return
 	}
 
-	meta.URL = fmt.Sprintf("%s/items/%s", "https://pajo.ug", itemID)
+	meta.URL = fmt.Sprintf("%s/items/%s", "https://QuickGin.ug", itemID)
 
 	c.HTML(http.StatusOK, "shareItem.html", meta)
-}
+}*/

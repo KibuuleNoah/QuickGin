@@ -7,10 +7,10 @@ import (
 	"log"
 	"time"
 
-	"pajo/db"
-	"pajo/models"
-	"pajo/models/cache"
-	"pajo/utils"
+	"QuickGin/db"
+	"QuickGin/models"
+	"QuickGin/models/cache"
+	"QuickGin/utils"
 	"github.com/jmoiron/sqlx"
 )
 
